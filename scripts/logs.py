@@ -1,6 +1,6 @@
 import numpy as np
 
-from base import get_dist, pair_index, convert_ts_to_sec, convert_sec_to_ts, convert_ts_to_m, convert_m_to_ts, ci_to_rd, rd_to_ci
+from base import get_dist, pair_index, convert_ts_to_sec, convert_sec_to_ts, convert_ts_to_m, convert_m_to_ts, ci_to_rd, rd_to_ci, convert_sec_to_m
 import ctypes
 
 from testbed_to_c_vals import create_inference_matrix
@@ -590,30 +590,44 @@ def estimate_rx_std_with_lls_cfo_fit(rows, method='mean'):
 def estimate_allan_mdev(group):
     import allantools
     tx_ts_diffs = np.diff([r['tx_ts'] for r in group])
-    assert np.std(tx_ts_diffs) == 0.0 # it needs to be constant!
+    if np.std(tx_ts_diffs) != 0.0:
+        return {}
 
-    rx_lls_fit = estimate_rx_std_with_lls_rx_fit(group)
+    #rx_lls_fit = estimate_rx_std_with_lls_rx_fit(group)
+    #rd = rx_lls_fit['ref_rd']
+    #ro = rx_lls_fit['ref_ts']
 
-    rd = rx_lls_fit['ref_rd']
-    ro = rx_lls_fit['ref_ts']
 
     tx_diff = convert_ts_to_sec(tx_ts_diffs[0])
     tx_rate = 1.0 / tx_diff
 
-    rx_ts = (np.asarray([r['rx_ts'] for r in group]) + ro) / rd
-    rx_ts = np.asarray([r for r in rx_ts])
+    #rx_ts = (np.asarray([r['rx_ts'] for r in group]) + ro) / rd
+    #rx_ts = np.asarray([convert_ts_to_sec(r) for r in rx_ts])
+    rx_ts = np.asarray([convert_ts_to_sec(r['rx_ts']) for r in group])
+    if len(rx_ts) != len(tx_ts_diffs)+1:
+        return {}
 
     (taus2, md, mde, ns) = allantools.mdev(rx_ts, rate=tx_rate, data_type='phase', taus='all')
 
-    ys = [convert_ts_to_m(x) for x in md]
-    print(ys)
+    ys = [convert_sec_to_m(x) for x in md]
+
+    #print(taus2)
+
+    time_devs = (taus2 / np.sqrt(3)) * ys
 
     from matplotlib import pyplot as plt
-    plt.plot(taus2, ys)
-    plt.show()
+    # plt.plot(taus2, ys)
+    # plt.show()
+    #
+    # plt.clf()
+    #plt.plot(taus2, time_devs)
+    #plt.show()
 
-
-    exit()
+    return {
+        'sample_variance': time_devs[0],
+        'sample_variance_min': np.min(time_devs),
+        'sample_variance_max': np.max(time_devs)
+    }
 
 def estimate_rx_noise_using_cfo(testbed, run, bias_corrected=True, skip_to_round = 0, up_to_round = None):
 
@@ -1109,7 +1123,7 @@ def gen_ping_pong_rx_noise_records(testbed, run, bias_corrected=True, max_slot_d
                     est_rx = estimate_rx_std_with_lls_rx_fit(group)
                     est_cfo_mean = estimate_rx_std_with_lls_cfo_fit(group, method='mean')
                     est_cfo_median = estimate_rx_std_with_lls_cfo_fit(group, method='median')
-                    #est_allan_mdev = estimate_allan_mdev(group)
+                    est_allan_mdev = estimate_allan_mdev(group)
 
                     for k in est_rx.keys():
                         rec['est_rx_' + k] = est_rx[k]
@@ -1120,6 +1134,8 @@ def gen_ping_pong_rx_noise_records(testbed, run, bias_corrected=True, max_slot_d
                     for k in est_cfo_median.keys():
                         rec['est_cfo_median_' + k] = est_cfo_median[k]
 
+                    for k in est_allan_mdev.keys():
+                        rec['est_allan_mdev_' + k] = est_allan_mdev[k]
                     yield rec
 
 
