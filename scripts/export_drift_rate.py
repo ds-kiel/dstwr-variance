@@ -29,8 +29,8 @@ from export_ping_pong_std import prepare_df, get_df
 logfiles = [
         '2024-02-28_ping_pong_200/job_11985.tar.gz',
         '2024-02-28_ping_pong_200/job_11986.tar.gz',
-        #'2024-02-28_ping_pong_200/job_11987.tar.gz',
-        #'2024-02-28_ping_pong_200/job_11988.tar.gz',
+        '2024-02-28_ping_pong_200/job_11987.tar.gz',
+        '2024-02-28_ping_pong_200/job_11988.tar.gz',
         # '2024-02-28_ping_pong_200/job_11989.tar.gz',
         # '2024-02-28_ping_pong_200/job_11990.tar.gz',
         # '2024-02-28_ping_pong_200/job_11991.tar.gz',
@@ -53,7 +53,10 @@ logfiles = [
         # '2024-03-01_ping_pong_200/job_12012.tar.gz',
 ]
 
-CHOSEN_DUR=200
+passive_dev = 6
+max_slot_dur = 22
+
+CHOSEN_DUR=82
 
 def get_noise_df(log, max_slots_dur, use_bias_correction=True):
     def proc():
@@ -63,7 +66,7 @@ def get_noise_df(log, max_slots_dur, use_bias_correction=True):
         df = pd.DataFrame.from_records(it)
         return df
 
-    df = utility.cached_dt_legacy(('get_noise_df_14', log, use_bias_correction, max_slots_dur), proc)
+    df = utility.cached_dt_legacy(('get_noise_df_12', log, use_bias_correction, max_slots_dur), proc)
     df['dur_ms'] = max_slots_dur * 0.75
 
     return df
@@ -99,27 +102,26 @@ def estimate_reception_noise_map(max_slots_dur=None, use_bias_correction=True, m
             if min_round is not None:
                 fdf = fdf[fdf['round'] >= min_round]
 
-            # # df_aggr = fdf.agg(
-            # #     rx_std_est_q25=('rx_std_est', lambda x: x.quantile(0.05)),
-            # #     rx_std_est_q50=('rx_std_est', lambda x: x.quantile(0.50)),
-            # #     rx_std_est_q75=('rx_std_est', lambda x: x.quantile(0.95)),
-            # #     rx_std_est_min=('rx_std_est', 'min'),
-            # #     rx_std_est_max=('rx_std_est', 'max'),
-            # #     rx_std_est_mean=('rx_std_est', 'mean')
-            # # )
-            #
-            # est_rx_ssr = fdf['est_rx_ssr'].to_numpy(dtype='float')
-            # est_rx_num = fdf['est_rx_num'].to_numpy(dtype='float')
-            #
-            # sd = convert_ts_to_m(est_noise_std(est_rx_ssr, est_rx_num))
-            #
-            # # ci = (est_noise_std_ci(est_rx_ssr, est_rx_num))
-            # # #print(sd, ci)
-            # # print(max_slots_dur, np.median(sd), convert_ts_to_m(np.median(ci[0])), convert_ts_to_m(np.median(ci[1])))
-            # # exit()
-            #print(fdf['est_allan_mdev_sample_variance'])
-            est_allan_dev = fdf['est_allan_mdev_sample_variance'].to_numpy(dtype='float')
-            rx_noise_map[(initiator, responder)] = np.nanmedian(est_allan_dev)
+            # df_aggr = fdf.agg(
+            #     rx_std_est_q25=('rx_std_est', lambda x: x.quantile(0.05)),
+            #     rx_std_est_q50=('rx_std_est', lambda x: x.quantile(0.50)),
+            #     rx_std_est_q75=('rx_std_est', lambda x: x.quantile(0.95)),
+            #     rx_std_est_min=('rx_std_est', 'min'),
+            #     rx_std_est_max=('rx_std_est', 'max'),
+            #     rx_std_est_mean=('rx_std_est', 'mean')
+            # )
+
+            est_rx_ssr = fdf['est_rx_ssr'].to_numpy(dtype='float')
+            est_rx_num = fdf['est_rx_num'].to_numpy(dtype='float')
+
+            sd = convert_ts_to_m(est_noise_std(est_rx_ssr, est_rx_num))
+
+            # ci = (est_noise_std_ci(est_rx_ssr, est_rx_num))
+            # #print(sd, ci)
+            # print(max_slots_dur, np.median(sd), convert_ts_to_m(np.median(ci[0])), convert_ts_to_m(np.median(ci[1])))
+            # exit()
+
+            rx_noise_map[(initiator, responder)] = np.median(sd)
 
     return rx_noise_map
 
@@ -279,7 +281,7 @@ if __name__ == '__main__':
     rx_noise_map = estimate_reception_noise_map(CHOSEN_DUR)
     print([rx_noise_map.get((3, i), None) for i in range(7)])
 
-    #export_drift(config['EXPORT_DIR'])
+    export_drift(config['EXPORT_DIR'])
     #export_drift_over_rounds(config['EXPORT_DIR'])
     #export_drift_rate_over_rounds(config['EXPORT_DIR'])
 
