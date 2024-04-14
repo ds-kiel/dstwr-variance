@@ -2,6 +2,7 @@ import os
 import progressbar
 import numpy as np
 import json
+import matplotlib.patches as mpatches
 
 import scipy.optimize
 
@@ -426,7 +427,7 @@ def export_tdoa_simulation_response_std(export_dir):
 
         plt.grid(color='lightgray', linestyle='dashed')
 
-        plt.legend(ncol=2,handletextpad=0.3)
+
         plt.gcf().set_size_inches(6.15, 5.0)
         ticks = list(ax.get_yticks())
         labels = list(ax.get_yticklabels())
@@ -453,6 +454,18 @@ def export_tdoa_simulation_response_std(export_dir):
 
         ax.xaxis.set_major_locator(plt.MultipleLocator(0.25))
         ax.xaxis.set_minor_locator(plt.MultipleLocator(0.125))
+
+        # access legend objects automatically created from data
+        handles, labels = plt.gca().get_legend_handles_labels()
+
+        # create manual symbols for legend
+        patch = mpatches.Patch(color='lightgrey', label='99% CI')
+
+        # add manual symbols to auto legend
+        handles.append(patch)
+        # legend on the side!ax2.legend(handles=handles, reverse=True, loc='center left', bbox_to_anchor=(1, 0.5))
+        ax.legend(handles=handles, reverse=False, ncol=2, handletextpad=0.3)
+
 
         print(ticks)
         print(labels)

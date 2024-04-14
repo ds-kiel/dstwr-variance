@@ -280,13 +280,46 @@ def export_raw_values_and_aggregate(export_dir):
     plt.close()
 
 
+def raw_histogram(export_dir):
+
+    max_slot_dur = 10
+    filter_ratio = True
+
+
+    colors = ['C4', 'C1', 'C2', 'C5', 'C3', 'C6', 'C7']
+
+    fig, (ax1, ax2) = plt.subplots(1, 2, width_ratios=[1, 1], sharey=True)
+    fig.subplots_adjust(hspace=0.01)
+
+    dfs = [
+        get_df(log, tdoa_src_dev_number=None, max_slots_dur=max_slot_dur) for log in logfiles
+    ]
+
+    active_df = pd.concat(dfs, ignore_index=True, copy=True)
+
+    df_3_6 = prepare_df(active_df, initiator=3, responder=6)
+
+    if filter_ratio:
+        df_3_6 = df_3_6[df_3_6['ratio_rounded'] == 0.5]
+
+
+    num_samples = 1000
+
+    df_3_6_errs = list(df_3_6['twr_tof_ds_err'])[0:num_samples]
+
+    ax1.hist(df_3_6_errs, bins=100, label=f"DS-TWR Multipath", alpha=1.0, color=colors[1])
+    save_and_crop("{}/raw_hist.pdf".format(export_dir), bbox_inches='tight', crop=True)
+
+    plt.close()
+
+
 if __name__ == '__main__':
     config = load_env_config()
     load_plot_defaults()
     assert 'EXPORT_DIR' in config and config['EXPORT_DIR']
     if 'CACHE_DIR' in config and config['CACHE_DIR']:
         init_cache(config['CACHE_DIR'])
-
-    export_raw_values_and_aggregate(config['EXPORT_DIR'])
+    raw_histogram(config['EXPORT_DIR'])
+    #export_raw_values_and_aggregate(config['EXPORT_DIR'])
     #export_std_over_duration_increase(config['EXPORT_DIR'])
     #export_raw_values_over_time(config['EXPORT_DIR'])

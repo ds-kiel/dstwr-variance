@@ -57,6 +57,8 @@ def convert_ts_to_m(ts):
 def convert_m_to_ts(m):
     return convert_sec_to_ts(m/SPEED_OF_LIGHT)
 
+def convert_sec_to_m(s):
+    return s*SPEED_OF_LIGHT
 
 def ci_to_rd(ci):
     return 1.0 - ci*(DWT_FREQ_OFFSET_MULTIPLIER * DWT_HERTZ_TO_PPM_MULTIPLIER_CHAN_5 / 1.0e6)

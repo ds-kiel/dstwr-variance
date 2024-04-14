@@ -57,8 +57,8 @@ def prepare_df(df, initiator=3, responder=5, min_round=50):
     df['delay_a_ms'] = df['delay_a'].apply(lambda x: convert_ts_to_sec(x) * 1000.0)
 
 
-    df['delay_b_ms_rounded'] = df['delay_b_ms'].apply(lambda x: np.round(x, decimals=1))
-    df['delay_a_ms_rounded'] = df['delay_a_ms'].apply(lambda x: np.round(x, decimals=1))
+    df['delay_b_ms_rounded'] = df['delay_b_ms'].apply(lambda x: np.round(x, decimals=2))
+    df['delay_a_ms_rounded'] = df['delay_a_ms'].apply(lambda x: np.round(x, decimals=2))
 
     df = df[df['delay_a_ms'].notnull() & df['delay_b_ms'].notnull()]
 
@@ -130,7 +130,7 @@ def export_delay_exp_ping_pong(export_dir):
     min_round = 50
 
     initiator = 3
-    responders = [5, 6]
+    responders = [0, 1, 2, 4, 5, 6]
     passive_devs = [0, 1, 2, 4, 5, 6]
 
     overall_r2_fits = {}
@@ -273,7 +273,8 @@ def export_delay_exp_ping_pong(export_dir):
                     #                                                           up_to_round=None)
 
                     me = active_df['twr_tof_ds_err'].mean()
-                    mae = np.mean(np.abs(active_df['twr_tof_ds_err']))
+                    #mae = np.mean(np.abs(active_df['twr_tof_ds_err']))
+                    mae = np.mean(active_df['twr_tof_ds_err'])
                     row += [mae]
 
                     # active_df = active_df[active_df['pair'] == "0-3"]
@@ -425,7 +426,8 @@ def export_delay_exp_ping_pong(export_dir):
                         filt_df = passive_df[passive_df['tdoa_device'] == passive_dev]
 
                         me = filt_df['tdoa_est_ds_err'].mean()
-                        mae = np.mean(np.abs(filt_df['tdoa_est_ds_err']))
+                        #mae = np.mean(np.abs(filt_df['tdoa_est_ds_err']))
+                        mae = np.mean(filt_df['tdoa_est_ds_err'])
                         row += [mae]
 
                         aggr_filt_df = filt_df.groupby('ratio_rounded').agg(
@@ -524,6 +526,7 @@ def export_delay_exp_ping_pong(export_dir):
     print(overall_r2_fits)
 
 
+graph_max_dur_slots = 42
 
 
 def export_first_std_graph(export_dir):
@@ -534,13 +537,12 @@ def export_first_std_graph(export_dir):
     initiator = 3
     responder = 5
     passive_devs = [1, 4, 2, 0, 6]
-    max_slots_dur = 42
 
     import export_drift_rate
     rx_noise_map = export_drift_rate.estimate_reception_noise_map(None, use_bias_correction=True, min_round=min_round)
 
     dfs = [
-        get_df(log, tdoa_src_dev_number=None, max_slots_dur=max_slots_dur) for log in logfiles
+        get_df(log, tdoa_src_dev_number=None, max_slots_dur=graph_max_dur_slots) for log in logfiles
     ]
 
     active_df = pd.concat(dfs, ignore_index=True, copy=True)
@@ -558,7 +560,7 @@ def export_first_std_graph(export_dir):
     # 12 3 to 4
     if len(passive_devs):
         dfs = [
-            get_df(log, tdoa_src_dev_number=d, max_slots_dur=max_slots_dur) for log in logfiles for d in passive_devs
+            get_df(log, tdoa_src_dev_number=d, max_slots_dur=graph_max_dur_slots) for log in logfiles for d in passive_devs
         ]
         passive_df = pd.concat(dfs, ignore_index=True, copy=True)
         passive_df = prepare_df(passive_df, initiator=initiator, responder=responder, min_round=min_round)
@@ -581,7 +583,7 @@ def export_first_std_graph(export_dir):
     active_df_aggr = active_df_aggr[active_df_aggr['ratio_rounded'] > 1]
 
     num_per_bin = 0
-    colors = ['C4', 'C1', 'C2', 'C5', 'C3', 'C5', 'C6']
+    colors = ['C4', 'C1', 'C2', 'C5', 'C3', 'C7', 'C6']
     styles = ['-']*7
 
     markers = ["o", ".", "v", "^", "+", "*", "s"]
@@ -614,8 +616,8 @@ def export_first_std_graph(export_dir):
 
     popt = [rx_noise_map[(initiator, responder)], rx_noise_map[(responder, initiator)]]
 
-    delay_b = data_xs*max_slots_dur*0.0075
-    delay_a = (1.0-data_xs)*max_slots_dur*0.0075
+    delay_b = data_xs*graph_max_dur_slots*0.0075
+    delay_a = (1.0-data_xs)*graph_max_dur_slots*0.0075
 
     n = np.mean(popt)
     alt_pred = calc_predicted_tof_std_navratil(n,n, delay_b, delay_a)
@@ -792,14 +794,13 @@ def export_second_std_graph(export_dir):
 
     initiator = 3
     responder = 0
-    passive_devs = [1, 4, 2, 4, 5, 6]
-    max_slots_dur = 42
+    passive_devs = [1, 4, 2, 5, 6]
 
     import export_drift_rate
     rx_noise_map = export_drift_rate.estimate_reception_noise_map(None, use_bias_correction=True, min_round=min_round)
 
     dfs = [
-        get_df(log, tdoa_src_dev_number=None, max_slots_dur=max_slots_dur) for log in logfiles
+        get_df(log, tdoa_src_dev_number=None, max_slots_dur=graph_max_dur_slots) for log in logfiles
     ]
 
     active_df = pd.concat(dfs, ignore_index=True, copy=True)
@@ -817,7 +818,7 @@ def export_second_std_graph(export_dir):
     # 12 3 to 4
     if len(passive_devs):
         dfs = [
-            get_df(log, tdoa_src_dev_number=d, max_slots_dur=max_slots_dur) for log in logfiles for d in passive_devs
+            get_df(log, tdoa_src_dev_number=d, max_slots_dur=graph_max_dur_slots) for log in logfiles for d in passive_devs
         ]
         passive_df = pd.concat(dfs, ignore_index=True, copy=True)
         passive_df = prepare_df(passive_df, initiator=initiator, responder=responder, min_round=min_round)
@@ -840,7 +841,7 @@ def export_second_std_graph(export_dir):
     active_df_aggr = active_df_aggr[active_df_aggr['ratio_rounded'] > 1]
 
     num_per_bin = 0
-    colors = ['C4', 'C1', 'C2', 'C5', 'C3', 'C5', 'C6']
+    colors = ['C4', 'C1', 'C2', 'C5', 'C3', 'C7', 'C6']
     styles = ['-']*7
 
     markers = ["o", ".", "v", "^", "+", "*", "s"]
@@ -873,8 +874,8 @@ def export_second_std_graph(export_dir):
 
     popt = [rx_noise_map[(initiator, responder)], rx_noise_map[(responder, initiator)]]
 
-    delay_b = data_xs*max_slots_dur*0.0075
-    delay_a = (1.0-data_xs)*max_slots_dur*0.0075
+    delay_b = data_xs*graph_max_dur_slots*0.0075
+    delay_a = (1.0-data_xs)*graph_max_dur_slots*0.0075
 
     n = np.mean(popt)
     alt_pred = calc_predicted_tof_std_navratil(n,n, delay_b, delay_a)
@@ -1050,13 +1051,12 @@ def export_third_std_graph(export_dir):
     initiator = 3
     responder = 6
     passive_devs = list(reversed([0, 1, 2, 4, 5]))
-    max_slots_dur = 42
 
     import export_drift_rate
     rx_noise_map = export_drift_rate.estimate_reception_noise_map(None, use_bias_correction=True, min_round=min_round)
 
     dfs = [
-        get_df(log, tdoa_src_dev_number=None, max_slots_dur=max_slots_dur) for log in logfiles
+        get_df(log, tdoa_src_dev_number=None, max_slots_dur=graph_max_dur_slots) for log in logfiles
     ]
 
     active_df = pd.concat(dfs, ignore_index=True, copy=True)
@@ -1074,7 +1074,7 @@ def export_third_std_graph(export_dir):
     # 12 3 to 4
     if len(passive_devs):
         dfs = [
-            get_df(log, tdoa_src_dev_number=d, max_slots_dur=max_slots_dur) for log in logfiles for d in passive_devs
+            get_df(log, tdoa_src_dev_number=d, max_slots_dur=graph_max_dur_slots) for log in logfiles for d in passive_devs
         ]
         passive_df = pd.concat(dfs, ignore_index=True, copy=True)
         passive_df = prepare_df(passive_df, initiator=initiator, responder=responder, min_round=min_round)
@@ -1097,7 +1097,7 @@ def export_third_std_graph(export_dir):
     active_df_aggr = active_df_aggr[active_df_aggr['ratio_rounded'] > 1]
 
     num_per_bin = 0
-    colors = ['C4', 'C1', 'C2', 'C5', 'C3', 'C5', 'C6']
+    colors = ['C4', 'C1', 'C2', 'C5', 'C3', 'C7', 'C6']
     styles = ['-']*7
 
     markers = ["o", ".", "v", "^", "+", "*", "s"]
@@ -1130,8 +1130,8 @@ def export_third_std_graph(export_dir):
 
     popt = [rx_noise_map[(initiator, responder)], rx_noise_map[(responder, initiator)]]
 
-    delay_b = data_xs*max_slots_dur*0.0075
-    delay_a = (1.0-data_xs)*max_slots_dur*0.0075
+    delay_b = data_xs*graph_max_dur_slots*0.0075
+    delay_a = (1.0-data_xs)*graph_max_dur_slots*0.0075
 
     n = np.mean(popt)
     alt_pred = calc_predicted_tof_std_navratil(n,n, delay_b, delay_a)
@@ -1282,8 +1282,8 @@ if __name__ == '__main__':
         init_cache(config['CACHE_DIR'])
 
     #export_first_std_graph(config['EXPORT_DIR'])
-    #export_second_std_graph(config['EXPORT_DIR'])
-    export_third_std_graph(config['EXPORT_DIR'])
+    export_second_std_graph(config['EXPORT_DIR'])
+    #export_third_std_graph(config['EXPORT_DIR'])
     #export_delay_exp_ping_pong(config['EXPORT_DIR'])
 
 

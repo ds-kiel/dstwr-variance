@@ -113,7 +113,7 @@ def export_ds_cfo_active_std_comparison(export_dir):
     fig.set_size_inches(3.0, 2.5)
 
     ax.set_xlabel(r"Delay Ratio $\dfrac{D_B}{D_B+D_A}$")
-    ax.set_ylabel('Mean SD [cm]')
+    ax.set_ylabel('Standard Deviation [cm]')
 
     plt.grid(color='lightgray', linestyle='dashed')
 
@@ -183,7 +183,7 @@ def export_ds_cfo_passive_std_comparison(export_dir):
     fig.set_size_inches(3.0, 2.5)
 
     ax.set_xlabel(r"Delay Ratio $\dfrac{D_B}{D_B+D_A}$")
-    ax.set_ylabel('Mean SD [cm]')
+    ax.set_ylabel('Standard Deviation [cm]')
 
 
     plt.grid(color='lightgray', linestyle='dashed')
@@ -260,7 +260,7 @@ def export_ds_cfo_active_mae_comparison(export_dir):
     fig.set_size_inches(6.0, 4.5)
 
     ax.set_xlabel('Delay Ratio [ms : ms]')
-    ax.set_ylabel('Mean Absolute Error [cm]')
+    ax.set_ylabel('MAE [cm]')
 
     plt.grid(color='lightgray', linestyle='dashed')
 
@@ -347,7 +347,7 @@ def export_ds_cfo_passive_mae_comparison(export_dir):
 def export_passive_combined(export_dir):
 
 
-    fig, (ax1, ax2) = plt.subplots(1, 2, width_ratios=[1, 1], sharey=True)
+    fig, (ax1, ax2) = plt.subplots(1, 2, width_ratios=[1, 1], sharey=False)
     fig.subplots_adjust(hspace=0.01)
 
 
@@ -451,6 +451,238 @@ def export_passive_combined(export_dir):
     plt.close()
 
 
+def export_passive_combined_duration(export_dir):
+
+
+    fig, (ax1, ax2) = plt.subplots(1, 2, width_ratios=[1, 1], sharey=False)
+    fig.subplots_adjust(hspace=0.01)
+
+    dfs = [
+        get_df(log, tdoa_src_dev_number=None, max_slots_dur=max_slot_dur) for log in logfiles
+    ]
+
+    active_df = pd.concat(dfs, ignore_index=True, copy=True)
+
+    active_df = prepare_df(active_df, initiator=initiator, responder=responder)
+
+    active_df['twr_tof_ss_avg'] = ((active_df['twr_tof_ss'] + active_df['twr_tof_ss_reverse']) / 2)
+    active_df['twr_tof_ss_avg_err'] = active_df['twr_tof_ss_avg'] - active_df['dist']
+
+    # active_df = active_df[active_df['pair'] == "0-3"]
+    # print(active_df['ratio_rounded'].unique())
+    active_df_aggr = active_df.groupby('delay_b_ms_rounded').agg(
+        {
+            'twr_tof_ds_err': 'std',
+            'twr_tof_ss_err': 'std',
+            'twr_tof_ss_reverse_err': 'std',
+            'twr_tof_ss_avg_err': 'std',
+            'delay_b_ms_rounded': 'mean'
+        }
+    )
+    print(active_df_aggr['delay_b_ms_rounded'])
+
+    # we fit a curve to the TWR measurements
+    colors = ['C4', 'C1', 'C2', 'C5', 'C3', 'C6', 'C7']
+    markers = ["o", ".", "v", "^", "+", "*", "s"]
+    marker_size = 5
+
+
+    active_df_aggr.plot.line(y='twr_tof_ds_err', ax=ax1, label="DS-TWR", style='-', color=colors[0], marker=markers[0],ms=marker_size)
+    active_df_aggr.plot.line(y='twr_tof_ss_err', ax=ax1, label="SS-TWR", style='-', color=colors[2], marker=markers[2],ms=marker_size)
+
+    # ax.xaxis.set_major_formatter(lambda x, pos: formatter(x))
+    ax1.yaxis.set_major_formatter(lambda x, pos: np.round(x * 100.0, 1))  # scale to cm
+
+    ax1.set_xlabel(r"$D_B$ [ms]")
+    ax1.set_ylabel('Sample SD [cm]')
+
+    ax1.grid(color='lightgray', linestyle='dashed')
+
+    ax1.xaxis.set_major_locator(plt.MultipleLocator(1.0))
+    ax1.xaxis.set_minor_locator(plt.MultipleLocator(0.5))
+
+    ax1.legend(reverse=True)
+    # plt.tight_layout()
+
+    # ax.set_xlim([-0.6, +0.6])
+
+    dfs = [
+        get_df(log, tdoa_src_dev_number=passive_dev, max_slots_dur=max_slot_dur) for log in logfiles
+    ]
+
+    passive_df = pd.concat(dfs, ignore_index=True, copy=True)
+
+    passive_df = prepare_df(passive_df, initiator=initiator, responder=responder)
+
+    # passive_df = passive_df[passive_df['pair'] == "0-3"]
+    # print(passive_df['ratio_rounded'].unique())
+    passive_df_aggr = passive_df.groupby('delay_b_ms_rounded').agg(
+        {
+            'tdoa_est_ds': 'std',
+            'tdoa_est_mixed': 'std',
+            'tdoa_est_ss_init': 'std',
+            'delay_b_ms_rounded': 'mean'
+        }
+    )
+
+    print(active_df_aggr)
+    print(passive_df_aggr)
+
+
+
+    # we fit a curve to the TWR measurements
+    passive_df_aggr.plot.line(y='tdoa_est_ds', ax=ax2, label="DS-TDoA", style='-', color=colors[1],  marker=markers[1],ms=marker_size)
+    passive_df_aggr.plot.line(y='tdoa_est_mixed', ax=ax2, label="Mixed TDoA", style='-', color=colors[3],  marker=markers[3],ms=marker_size)
+    passive_df_aggr.plot.line(y='tdoa_est_ss_init', ax=ax2, label="SS-TDoA", style='-', color=colors[4],  marker=markers[4],ms=marker_size)
+
+    # ax.xaxis.set_major_formatter(lambda x, pos: formatter(x))
+
+    # ax.xaxis.set_major_formatter(lambda x, pos: formatter(x))
+    ax2.yaxis.set_major_formatter(lambda x, pos: np.round(x * 100.0, 1))  # scale to cm
+
+    ax2.set_xlabel(r"$D_B$ [ms]")
+    ax2.set_ylabel('SD [cm]')
+
+    ax2.grid(color='lightgray', linestyle='dashed')
+
+    ax2.legend(reverse=True)
+    # plt.tight_layout()
+
+    ax1.set_ylim([0.0, 0.16])
+    ax2.set_ylim([0.0, 0.16])
+
+    #ax2.xaxis.set_major_locator(plt.MultipleLocator(0.25))
+    #ax2.xaxis.set_minor_locator(plt.MultipleLocator(0.125))
+
+    ax2.xaxis.set_major_locator(plt.MultipleLocator(1.0))
+    ax2.xaxis.set_minor_locator(plt.MultipleLocator(0.5))
+
+    fig.set_size_inches(6.0, 2.5)
+    fig.tight_layout()
+    # ax.set_ylim([0.016, 0.05])
+    save_and_crop("{}/cfo_cfo_comparison_combined_duration.pdf".format(export_dir), bbox_inches='tight', crop=True)
+
+    plt.close()
+
+
+def export_passive_combined_duration_me(export_dir):
+
+
+    fig, (ax1, ax2) = plt.subplots(1, 2, width_ratios=[1, 1], sharey=False)
+    fig.subplots_adjust(hspace=0.01)
+
+    dfs = [
+        get_df(log, tdoa_src_dev_number=None, max_slots_dur=max_slot_dur) for log in logfiles
+    ]
+
+    active_df = pd.concat(dfs, ignore_index=True, copy=True)
+
+    active_df = prepare_df(active_df, initiator=initiator, responder=responder)
+
+    active_df['twr_tof_ss_avg'] = ((active_df['twr_tof_ss'] + active_df['twr_tof_ss_reverse']) / 2)
+    active_df['twr_tof_ss_avg_err'] = active_df['twr_tof_ss_avg'] - active_df['dist']
+
+
+
+
+
+    # active_df = active_df[active_df['pair'] == "0-3"]
+    # print(active_df['ratio_rounded'].unique())
+    active_df_aggr = active_df.groupby('delay_b_ms_rounded').agg(
+        {
+            'twr_tof_ds_err': 'mean',
+            'twr_tof_ss_err': 'mean',
+            'twr_tof_ss_reverse_err': 'mean',
+            'twr_tof_ss_avg_err': 'mean',
+            'delay_b_ms_rounded': 'mean'
+        }
+    )
+
+    #active_df_aggr['twr_tof_ds_err'] = active_df_aggr['twr_tof_ds_err'].apply(np.abs)
+    #active_df_aggr['twr_tof_ss_err'] = active_df_aggr['twr_tof_ss_err'].apply(np.abs)
+
+    # we fit a curve to the TWR measurements
+    colors = ['C4', 'C1', 'C2', 'C5', 'C3', 'C6', 'C7']
+    markers = ["o", ".", "v", "^", "+", "*", "s"]
+    marker_size = 5
+
+
+    active_df_aggr.plot.line(y='twr_tof_ds_err', ax=ax1, label="DS-TWR", style='-', color=colors[0], marker=markers[0],ms=marker_size)
+    active_df_aggr.plot.line(y='twr_tof_ss_err', ax=ax1, label="SS-TWR", style='-', color=colors[2], marker=markers[2],ms=marker_size)
+
+    # ax.xaxis.set_major_formatter(lambda x, pos: formatter(x))
+    ax1.yaxis.set_major_formatter(lambda x, pos: np.round(x * 100.0, 1))  # scale to cm
+
+    ax1.set_xlabel(r"$D_B$ [ms]")
+    ax1.set_ylabel('Mean Error [cm]')
+
+    ax1.grid(color='lightgray', linestyle='dashed')
+
+    ax1.xaxis.set_major_locator(plt.MultipleLocator(1.0))
+    ax1.xaxis.set_minor_locator(plt.MultipleLocator(0.5))
+
+    ax1.legend(reverse=True)
+    # plt.tight_layout()
+
+    # ax.set_xlim([-0.6, +0.6])
+
+    dfs = [
+        get_df(log, tdoa_src_dev_number=passive_dev, max_slots_dur=max_slot_dur) for log in logfiles
+    ]
+
+    passive_df = pd.concat(dfs, ignore_index=True, copy=True)
+
+    passive_df = prepare_df(passive_df, initiator=initiator, responder=responder)
+
+
+    # passive_df = passive_df[passive_df['pair'] == "0-3"]
+    # print(passive_df['ratio_rounded'].unique())
+    passive_df_aggr = passive_df.groupby('delay_b_ms_rounded').agg(
+        {
+            'tdoa_est_ds_err': 'mean',
+            'tdoa_est_mixed_err': 'mean',
+            'tdoa_est_ss_init_err': 'mean',
+            'delay_b_ms_rounded': 'mean'
+        }
+    )
+
+    #passive_df_aggr['tdoa_est_ds_err'] = passive_df_aggr['tdoa_est_ds_err'].apply(np.abs)
+    #passive_df_aggr['tdoa_est_mixed_err'] = passive_df_aggr['tdoa_est_mixed_err'].apply(np.abs)
+    #passive_df_aggr['tdoa_est_ss_init_err'] = passive_df_aggr['tdoa_est_ss_init_err'].apply(np.abs)
+
+    # we fit a curve to the TWR measurements
+    passive_df_aggr.plot.line(y='tdoa_est_ds_err', ax=ax2, label="DS-TDoA", style='-', color=colors[1],  marker=markers[1],ms=marker_size)
+    passive_df_aggr.plot.line(y='tdoa_est_mixed_err', ax=ax2, label="Mixed TDoA", style='-', color=colors[3],  marker=markers[3],ms=marker_size)
+    passive_df_aggr.plot.line(y='tdoa_est_ss_init_err', ax=ax2, label="SS-TDoA", style='-', color=colors[4],  marker=markers[4],ms=marker_size)
+
+    # ax.xaxis.set_major_formatter(lambda x, pos: formatter(x))
+
+    # ax.xaxis.set_major_formatter(lambda x, pos: formatter(x))
+    ax2.yaxis.set_major_formatter(lambda x, pos: np.round(x * 100.0, 1))  # scale to cm
+
+    ax2.set_xlabel(r"$D_B$ [ms]")
+    ax2.set_ylabel('Mean Error [cm]')
+
+    ax2.grid(color='lightgray', linestyle='dashed')
+
+    ax2.legend(reverse=True)
+    # plt.tight_layout()
+
+    #ax1.set_ylim([None, 1.0])
+    #ax2.set_ylim([None, 1.0])
+
+    #ax2.xaxis.set_major_locator(plt.MultipleLocator(0.25))
+    #ax2.xaxis.set_minor_locator(plt.MultipleLocator(0.125))
+
+    ax2.xaxis.set_major_locator(plt.MultipleLocator(1.0))
+    ax2.xaxis.set_minor_locator(plt.MultipleLocator(0.5))
+
+    fig.set_size_inches(6.0, 2.5)
+    fig.tight_layout()
+    # ax.set_ylim([0.016, 0.05])
+    save_and_crop("{}/cfo_cfo_comparison_combined_duration_mean_error.pdf".format(export_dir), bbox_inches='tight', crop=True)
+
+    plt.close()
 
 if __name__ == '__main__':
     config = load_env_config()
@@ -459,7 +691,9 @@ if __name__ == '__main__':
     if 'CACHE_DIR' in config and config['CACHE_DIR']:
         init_cache(config['CACHE_DIR'])
 
-    export_passive_combined(config['EXPORT_DIR'])
+    export_passive_combined_duration_me(config['EXPORT_DIR'])
+    export_passive_combined_duration(config['EXPORT_DIR'])
+    #export_passive_combined(config['EXPORT_DIR'])
     #export_ds_cfo_active_std_comparison(config['EXPORT_DIR'])
     #export_ds_cfo_passive_std_comparison(config['EXPORT_DIR'])
     #export_ds_cfo_active_mae_comparison(config['EXPORT_DIR'])
