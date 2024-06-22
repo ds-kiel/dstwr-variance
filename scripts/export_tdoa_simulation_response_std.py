@@ -8,8 +8,8 @@ import scipy.optimize
 
 import logs
 import utility
-from eval_old import calc_predicted_tof_std_navratil
 
+import models
 
 from testbed import lille, trento_a, trento_b
 
@@ -224,6 +224,14 @@ def export_tdoa_simulation_response_std(export_dir):
     rx_noise_std = 1.0e-09
     drift_rate_std= 8.0e-08
 
+
+    rx_noise_mean = {
+        'a-b': 0.0e-09,
+        'b-a': 1.0e-09,
+        'a-p': 2.0e-09,
+        'b-p': 1.0e-09,
+    }
+
     rx_noise_stds = {
         'a-b': rx_noise_std,
         'b-a': rx_noise_std,
@@ -231,39 +239,48 @@ def export_tdoa_simulation_response_std(export_dir):
         'b-p': rx_noise_std,
     }
 
-    def get_rx_noise(tx, rx):
+    def get_rx_noise_mean(tx, rx):
+        if isinstance(rx_noise_mean, dict):
+            return rx_noise_mean["{}-{}".format(tx, rx)]
+        else:
+            return rx_noise_mean
+
+    def get_rx_noise_std(tx, rx):
         if isinstance(rx_noise_stds, dict):
             return rx_noise_stds["{}-{}".format(tx, rx)]
         else:
             return rx_noise_stds
 
+    def calc_predicted_tof_bias_mean(delay_b, delay_a):
+        a_b_mean = get_rx_noise_mean('a', 'b')
+        b_a_mean = get_rx_noise_mean('b', 'a')
+
+        return models.calc_predicted_tof_bias_mean(delay_b, delay_a, a_b_mean, b_a_mean)
+    
+    def calc_predicted_tdoa_bias_mean(delay_b, delay_a):
+        a_b_mean = get_rx_noise_mean('a', 'b')
+        b_a_mean = get_rx_noise_mean('b', 'a')
+        a_p_mean = get_rx_noise_mean('a', 'p')
+        b_p_mean = get_rx_noise_mean('b', 'p')
+
+        return models.calc_predicted_tdoa_bias_mean(delay_b, delay_a, a_b_mean, b_a_mean, a_p_mean, b_p_mean)
+
     def calc_predicted_tof_std(delay_b, delay_a):
-        a_b_std = get_rx_noise('a', 'b')
-        b_a_std = get_rx_noise('b', 'a')
+        a_b_std = get_rx_noise_std('a', 'b')
+        b_a_std = get_rx_noise_std('b', 'a')
 
-        return np.sqrt(
-            (0.5 * b_a_std) ** 2
-            + (0.5 * (delay_b / (delay_a + delay_b)) * a_b_std) ** 2
-            + (0.5 * (1 - (delay_b / (delay_a + delay_b))) * a_b_std) ** 2
-        )
-
+        return models.calc_predicted_tof_std(delay_b, delay_a, a_b_std, b_a_std)
 
     def calc_predicted_tdoa_std(delay_b, delay_a):
-        a_b_std = get_rx_noise('a', 'b')
-        b_a_std = get_rx_noise('b', 'a')
-        a_p_std = get_rx_noise('a', 'p')
-        b_p_std = get_rx_noise('b', 'p')
 
-        comb_delay = delay_a+delay_b
+        a_b_std = get_rx_noise_std('a', 'b')
+        b_a_std = get_rx_noise_std('b', 'a')
+        a_p_std = get_rx_noise_std('a', 'p')
+        b_p_std = get_rx_noise_std('b', 'p')
 
-        return np.sqrt(
-            (0.5 * b_a_std) ** 2
-            + (0.5 * a_b_std * (delay_b/comb_delay-1)) ** 2
-            + (0.5 * a_b_std * (delay_b/comb_delay)) ** 2
-            + (a_p_std * (1-delay_b/comb_delay)) ** 2
-            + b_p_std ** 2
-            + (a_p_std * (delay_b/comb_delay)) ** 2
-        )
+        return models.calc_predicted_tdoa_std(delay_b, delay_a, a_b_std, b_a_std, a_p_std, b_p_std)
+
+
 
     #@utility.cached
     def proc_simulation_response_std(
@@ -320,15 +337,19 @@ def export_tdoa_simulation_response_std(export_dir):
                         'tdoa_mean': 1.0e09 * (res['est_tdoa']).mean(),
                         'tdoa_ds_mean': 1.0e09 * (res['est_tdoa_ds']).mean(),
                         'tdoa_half_cor_mean': 1.0e09 * (res['est_tdoa_half_cor']).mean(),
-                        'tdoa_ds_half_cor_mean': 1.0e09 * (res['est_tdoa_ds_half_cor']).mean()
+                        'tdoa_ds_half_cor_mean': 1.0e09 * (res['est_tdoa_ds_half_cor']).mean(),
+                        'tof_bias_mean': 1.0e09 * ((res['est_tof_a']).mean()-(res['real_tof']).mean()),
+                        'tdoa_ds_bias_mean': 1.0e09 * ((res['est_tdoa_ds']).mean()-(res['real_tdoa']).mean()),
                     }
                 )
 
             prediction_rows.append({
                 'rdr': x,
                 'predicted_tof_std': 1.0e09 * calc_predicted_tof_std(delay_b, delay_a),
-                'predicted_tof_std_navratil': 1.0e09 * calc_predicted_tof_std_navratil(get_rx_noise('a', 'b'), get_rx_noise('b', 'a'), delay_b, delay_a),
-                'predicted_tdoa_std': 1.0e09 * calc_predicted_tdoa_std(delay_b, delay_a)
+                'predicted_tof_bias_mean': 1.0e09 * calc_predicted_tof_bias_mean(delay_b, delay_a),
+                'predicted_tof_std_navratil': 1.0e09 * models.calc_predicted_tof_std_navratil(get_rx_noise_std('a', 'b'), get_rx_noise_std('b', 'a'), delay_b, delay_a),
+                'predicted_tdoa_std': 1.0e09 * calc_predicted_tdoa_std(delay_b, delay_a),
+                'predicted_tdoa_bias_mean': 1.0e09 * calc_predicted_tdoa_bias_mean(delay_b, delay_a),
             })
         return data_rows, prediction_rows
 
@@ -378,6 +399,7 @@ def export_tdoa_simulation_response_std(export_dir):
         #data_df.plot.scatter(x='rdr', y='Simulated DS-TDoA', ax=ax, c='C2', s=0.5, label='Simulated DS-TDoA')
 
         print("Mean", data_df['tof_mean'].mean(), data_df['tdoa_ds_mean'].mean())
+        print("Bias Mean", data_df['tof_bias_mean'].mean(), data_df['tdoa_ds_bias_mean'].mean())
 
         #ax.xaxis.set_major_formatter(lambda x, pos: r'$10^{{{}}}$'.format(int(round(x))))
 
@@ -432,7 +454,7 @@ def export_tdoa_simulation_response_std(export_dir):
         ticks = list(ax.get_yticks())
         labels = list(ax.get_yticklabels())
 
-        #ticks.append(1.0e09 * np.sqrt((0.5*get_rx_noise('a', 'b'))**2 + (0.5*get_rx_noise('b', 'a'))**2))
+        #ticks.append(1.0e09 * np.sqrt((0.5*get_rx_noise_std('a', 'b'))**2 + (0.5*get_rx_noise_std('b', 'a'))**2))
         #labels.append(r'$\sqrt{0.5^2 \sigma_{BA}^2 + 0.5^2 \sigma_{AB}^2}$')
 
         ticks.append(np.sqrt(0.5))
@@ -485,7 +507,7 @@ if __name__ == '__main__':
     assert 'EXPORT_DIR' in config and config['EXPORT_DIR']
     if 'CACHE_DIR' in config and config['CACHE_DIR']:
         init_cache(config['CACHE_DIR'])
-    # TODO: Implement the logarithmic one again!
+
     export_tdoa_simulation_response_std(config['EXPORT_DIR'])
 
 

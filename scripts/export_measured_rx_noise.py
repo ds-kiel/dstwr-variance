@@ -7,7 +7,7 @@ import scipy.optimize
 
 import logs
 import utility
-from eval_old import calc_predicted_tof_std_navratil
+from models import calc_predicted_tof_std_navratil
 
 
 from testbed import lille, trento_a, trento_b

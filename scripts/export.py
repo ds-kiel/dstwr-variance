@@ -32,7 +32,6 @@ c_in_air = 299702547.236
 
 PROTOCOL_NAME = "X"
 
-
 def load_plot_defaults():
     # Configure as needed
     plt.rc('lines', linewidth=2.0)

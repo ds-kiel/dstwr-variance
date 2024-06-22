@@ -1173,43 +1173,6 @@ def export_tdoa_simulation_rx_noise(config, export_dir):
 
     plt.close()
 
-def calc_predicted_tof_std_navratil(a_b_std, b_a_std, delay_b, delay_a):
-
-    if a_b_std != b_a_std:
-        return None # we cannot predict in this model
-
-    sigma = a_b_std
-
-    r = 10.0 # TODO: this value is from the simulation, i.e., the true range
-    tof = r / c_in_air
-
-    t_b1 = delay_b
-    t_a2 = delay_a
-    t_a1 = t_b1 + 2*tof
-    t_b2 = t_a2 + 2*tof
-
-    sigma_mu = (delay_b+delay_a+3*tof)*2
-
-    var = sigma*sigma*(
-            (
-                    2.0*(
-                        t_b2 * t_b2
-                        + t_a1*t_a1
-                        + t_b1*t_b1
-                        + t_a2*t_a2
-                        + t_a1*t_a2
-                        + t_b1*t_b2
-                    )
-                    #+ (4.0 * r * r / (c_in_air * c_in_air))
-            ) / (sigma_mu*sigma_mu)
-           )
-
-    return np.sqrt(var)
-
-
-
-
-
 
 
 def export_loc_sim(config, export_dir):
