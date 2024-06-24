@@ -68,3 +68,17 @@ def ci_to_rd(ci):
 
 def rd_to_ci(rd):
     return (1.0 - rd) / (DWT_FREQ_OFFSET_MULTIPLIER * DWT_HERTZ_TO_PPM_MULTIPLIER_CHAN_5 / 1.0e6)
+
+
+# alpha=0.01 corresponds to 99% confidence interval
+def calc_ci_of_sd(sd, num, alpha=0.01):
+    import scipy
+    low = np.sqrt(((num-1)*(sd**2))/scipy.stats.chi2.ppf(1.0-alpha/2.0, num - 1))
+    up = np.sqrt(((num-1)*(sd**2))/scipy.stats.chi2.ppf(alpha/2.0, num - 1))
+    return (low, up)
+
+
+def calc_ci_offsets_of_mean(sd, num, confidence=0.95, mean=0.0):
+    import scipy
+    se = sd / np.sqrt(num)
+    return scipy.stats.t.interval(confidence=confidence, df=num-1, loc=mean, scale=se)

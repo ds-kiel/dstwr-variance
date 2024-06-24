@@ -12,6 +12,7 @@ from testbed import lille, trento_a, trento_b
 
 from logs import gen_estimations_from_testbed_run, gen_measurements_from_testbed_run, \
     gen_delay_estimates_from_testbed_run
+import base
 from base import get_dist, pair_index, convert_ts_to_sec, convert_sec_to_ts, convert_ts_to_m, convert_m_to_ts, ci_to_rd
 
 import matplotlib
@@ -167,19 +168,19 @@ def export_drift(export_dir):
             # exit()
             #
             # est_rx_sample_variance = np.asarray(df_aggr['est_rx_ssr'].to_numpy(dtype='double') / (df_aggr['est_rx_num'].to_numpy(dtype='double') - 2.0))
-            # est_rx_ci_low, est_rx_ci_up = logs.calc_ci_of_sd(np.sqrt(est_rx_sample_variance), df_aggr['est_rx_num'].to_numpy(dtype='double'))
+            # est_rx_ci_low, est_rx_ci_up = base.calc_ci_of_sd(np.sqrt(est_rx_sample_variance), df_aggr['est_rx_num'].to_numpy(dtype='double'))
             # est_rx_ci_low, est_rx_ci_up = (convert_ts_to_m(est_rx_ci_low), convert_ts_to_m(est_rx_ci_up))
             # est_rx_sample_variance = convert_ts_to_m(np.sqrt(est_rx_sample_variance))
 
             # est_cfo_median_sample_variance = df_aggr['est_cfo_median_ssr'].to_numpy(dtype='double') / (df_aggr['est_cfo_median_num'].to_numpy(dtype='double') - 2)
-            # est_cfo_median_ci_low, est_cfo_median_ci_up = logs.calc_ci_of_sd(np.sqrt(est_cfo_median_sample_variance),
+            # est_cfo_median_ci_low, est_cfo_median_ci_up = base.calc_ci_of_sd(np.sqrt(est_cfo_median_sample_variance),
             #                                                  df_aggr['est_cfo_median_num'].to_numpy(dtype='double'))
             # est_cfo_median_ci_low, est_cfo_median_ci_up = (convert_ts_to_m(est_cfo_median_ci_low), convert_ts_to_m(est_cfo_median_ci_up))
             # est_cfo_median_sample_variance = convert_ts_to_m(np.sqrt(est_cfo_median_sample_variance))
             #
             # est_cfo_mean_sample_variance = df_aggr['est_cfo_mean_ssr'].to_numpy(dtype='double') / (
             #             df_aggr['est_cfo_mean_num'].to_numpy(dtype='double') - 2)
-            # est_cfo_mean_ci_low, est_cfo_mean_ci_up = logs.calc_ci_of_sd(np.sqrt(est_cfo_mean_sample_variance),
+            # est_cfo_mean_ci_low, est_cfo_mean_ci_up = base.calc_ci_of_sd(np.sqrt(est_cfo_mean_sample_variance),
             #                                                                  df_aggr['est_cfo_mean_num'].to_numpy(dtype='double'))
             # est_cfo_mean_ci_low, est_cfo_mean_ci_up = (convert_ts_to_m(est_cfo_mean_ci_low), convert_ts_to_m(est_cfo_mean_ci_up))
             # est_cfo_mean_sample_variance = convert_ts_to_m(np.sqrt(est_cfo_mean_sample_variance))

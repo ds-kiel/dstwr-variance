@@ -1,6 +1,6 @@
 import numpy as np
 
-from base import get_dist, pair_index, convert_ts_to_sec, convert_sec_to_ts, convert_ts_to_m, convert_m_to_ts, ci_to_rd, rd_to_ci, convert_sec_to_m
+from base import get_dist, pair_index, convert_ts_to_sec, convert_sec_to_ts, convert_ts_to_m, convert_m_to_ts, ci_to_rd, rd_to_ci, convert_sec_to_m, calc_ci_of_sd
 import ctypes
 
 from testbed_to_c_vals import create_inference_matrix
@@ -487,11 +487,7 @@ import math
 import scipy
 from scipy import stats
 
-# alpha=0.01 corresponds to 99% confidence interval
-def calc_ci_of_sd(sd, num, alpha=0.01):
-    low = np.sqrt(((num-1)*(sd**2))/scipy.stats.chi2.ppf(1.0-alpha/2.0, num - 1))
-    up = np.sqrt(((num-1)*(sd**2))/scipy.stats.chi2.ppf(alpha/2.0, num - 1))
-    return (low, up)
+
 
 def estimate_noise_std_with_lls_grouped(pairs, group_size=5):
     df = pd.DataFrame.from_records(pairs)

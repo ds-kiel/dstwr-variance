@@ -54,7 +54,7 @@ def tof_to_passive(a):
     return np.linalg.norm(np.array(NODES_POSITIONS[a]) - np.array(PASSIVE_NODE_POSITION)) / c_in_air
 
 
-def sim_exchange(a, b, resp_delay_s=RESP_DELAY_S, node_drift_std=NODE_DRIFT_STD, tx_delay_mean=TX_DELAY_MEAN, tx_delay_std=TX_DELAY_STD, rx_delay_mean=RX_DELAY_MEAN, rx_delay_std=RX_DELAY_STD, rx_noise_std=RX_NOISE_STD, drift_rate_std=DRIFT_RATE_STD):
+def sim_exchange(a, b, resp_delay_s=RESP_DELAY_S, node_drift_std=NODE_DRIFT_STD, tx_delay_mean=TX_DELAY_MEAN, tx_delay_std=TX_DELAY_STD, rx_delay_mean=RX_DELAY_MEAN, rx_delay_std=RX_DELAY_STD, rx_noise=RX_NOISE_STD, drift_rate_std=DRIFT_RATE_STD):
     n = len(NODES_POSITIONS)
     # we fix the node drifts
     node_drifts = np.random.normal(loc=1.0,  scale=node_drift_std, size=n)
@@ -72,11 +72,22 @@ def sim_exchange(a, b, resp_delay_s=RESP_DELAY_S, node_drift_std=NODE_DRIFT_STD,
         resp_delay_s_a = resp_delay_s
         resp_delay_s_b = resp_delay_s
 
+
     def get_rx_noise(tx, rx):
-        if isinstance(rx_noise_std, dict):
-            return rx_noise_std["{}-{}".format(tx, rx)]
+        if isinstance(rx_noise, dict):
+            return rx_noise["{}-{}".format(tx, rx)]
         else:
-            return rx_noise_std
+            return rx_noise
+
+
+    def sample_rx_noise(tx, rx):
+        noise = get_rx_noise(tx, rx)
+        if callable(noise):
+            return noise(tx, rx)
+        elif type(noise) is tuple:
+            return np.random.normal(loc=noise[0], scale=noise[1])
+        else:
+            return np.random.normal(loc=0.0, scale=noise)
 
     def calc_drifted_dur_a(dur):
         return dur * node_drifts[a] + np.random.normal(loc=0.0, scale=drift_rate_std*dur)
@@ -87,12 +98,13 @@ def sim_exchange(a, b, resp_delay_s=RESP_DELAY_S, node_drift_std=NODE_DRIFT_STD,
     def calc_drifted_dur_passive(dur):
         return dur * passive_node_drift + np.random.normal(loc=0.0, scale=drift_rate_std*dur)
 
+
     a_actual_poll_tx = 0
-    b_actual_poll_rx = a_actual_poll_tx + np.random.normal(loc=t, scale=get_rx_noise('a', 'b'))
+    b_actual_poll_rx = a_actual_poll_tx + t + sample_rx_noise('a', 'b')
     b_actual_response_tx = b_actual_poll_rx + resp_delay_s_a
-    a_actual_response_rx = b_actual_response_tx + np.random.normal(loc=t, scale=get_rx_noise('b', 'a'))
+    a_actual_response_rx = b_actual_response_tx + t + sample_rx_noise('b', 'a')
     a_actual_final_tx = a_actual_response_rx + resp_delay_s_b
-    b_actual_final_rx = a_actual_final_tx + np.random.normal(loc=t, scale=get_rx_noise('a', 'b'))
+    b_actual_final_rx = a_actual_final_tx + t + sample_rx_noise('a', 'b')
 
 
     # tx timestamps are skewed in a negative way -> i.e. increase the measured_rtt
@@ -111,9 +123,9 @@ def sim_exchange(a, b, resp_delay_s=RESP_DELAY_S, node_drift_std=NODE_DRIFT_STD,
     b_measured_delay_drifted = calc_drifted_dur_b(b_delayed_response_tx - b_delayed_poll_rx)
 
     # we compute times for TDoA using an additional passive node, note that we do not need delays here
-    p_actual_poll_rx = a_actual_poll_tx + np.random.normal(loc=tof_to_passive(a), scale=get_rx_noise('a', 'p'))
-    p_actual_response_rx = b_actual_response_tx + np.random.normal(loc=tof_to_passive(b), scale=get_rx_noise('b', 'p'))
-    p_actual_final_rx = a_actual_final_tx + np.random.normal(loc=tof_to_passive(a), scale=get_rx_noise('a', 'p'))
+    p_actual_poll_rx = a_actual_poll_tx + tof_to_passive(a) + sample_rx_noise('a', 'p')
+    p_actual_response_rx = b_actual_response_tx + tof_to_passive(b) + sample_rx_noise('b', 'p')
+    p_actual_final_rx = a_actual_final_tx + tof_to_passive(a) + sample_rx_noise('a', 'p')
 
     passive_tdoa_drifted = calc_drifted_dur_passive(p_actual_response_rx - p_actual_poll_rx)
     passive_overall_drifted = passive_tdoa_drifted+calc_drifted_dur_passive(p_actual_final_rx - p_actual_response_rx)
@@ -260,9 +272,9 @@ def calculate_in_place(data_rows, mitigate_drift=True):
         yield r
 
 
-def sim(num_exchanges = 100000, resp_delay_s=RESP_DELAY_S, node_drift_std=NODE_DRIFT_STD, tx_delay_mean=TX_DELAY_MEAN, tx_delay_std=TX_DELAY_STD, rx_delay_mean=RX_DELAY_MEAN, rx_delay_std=RX_DELAY_STD, rx_noise_std=RX_NOISE_STD, mitigate_drift=True, drift_rate_std=DRIFT_RATE_STD):
+def sim(num_exchanges = 100000, resp_delay_s=RESP_DELAY_S, node_drift_std=NODE_DRIFT_STD, tx_delay_mean=TX_DELAY_MEAN, tx_delay_std=TX_DELAY_STD, rx_delay_mean=RX_DELAY_MEAN, rx_delay_std=RX_DELAY_STD, rx_noise=RX_NOISE_STD, mitigate_drift=True, drift_rate_std=DRIFT_RATE_STD):
 
-    data_rows = list(calculate_in_place([sim_exchange(0, 1, resp_delay_s=resp_delay_s, node_drift_std = node_drift_std, tx_delay_mean = tx_delay_mean, tx_delay_std = tx_delay_std, rx_delay_mean = rx_delay_mean, rx_delay_std = rx_delay_std, rx_noise_std = rx_noise_std, drift_rate_std=drift_rate_std) for x in range(num_exchanges)], mitigate_drift= mitigate_drift))
+    data_rows = list(calculate_in_place([sim_exchange(0, 1, resp_delay_s=resp_delay_s, node_drift_std = node_drift_std, tx_delay_mean = tx_delay_mean, tx_delay_std = tx_delay_std, rx_delay_mean = rx_delay_mean, rx_delay_std = rx_delay_std, rx_noise = rx_noise, drift_rate_std=drift_rate_std) for x in range(num_exchanges)], mitigate_drift= mitigate_drift))
 
     data = {}
     for k in data_rows[0]:

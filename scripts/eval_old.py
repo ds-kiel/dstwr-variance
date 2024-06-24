@@ -1049,7 +1049,7 @@ def export_tdoa_simulation_drift_performance(config, export_dir):
             num_exchanges=num_repetitions,
             resp_delay_s=(1.0, 0.000001),
             node_drift_std=x,
-            rx_noise_std=1.0e-09,
+            rx_noise=1.0e-09,
             tx_delay_mean=0.0,
             tx_delay_std=0.0, rx_delay_mean=0.0, rx_delay_std=0.0
         )
@@ -1119,7 +1119,7 @@ def export_tdoa_simulation_rx_noise(config, export_dir):
             num_exchanges=num_repetitions,
             resp_delay_s=0.001,
             node_drift_std=1.0e-06,
-            rx_noise_std=x/100.0,
+            rx_noise=x/100.0,
             tx_delay_mean=0.0,
             tx_delay_std=0.0, rx_delay_mean=0.0, rx_delay_std=0.0
         )
