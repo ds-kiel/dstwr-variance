@@ -409,10 +409,9 @@ def export_tdoa_simulation_response_std(export_dir):
     #plt.axhline(y=np.sqrt(2.5), color='C1', linestyle='dotted', label = "Analytical TDoA")
 
 
-
     #plt.ylim([0.0, 1.0])
     #plt.xlim([-0.5, 0.5])
-    #plt.ylim(0.2, 15)
+
 
     ax.set_axisbelow(True)
     ax.set_xlabel(r"Delay Ratio $\dfrac{D_B}{D_B+D_A}$")
@@ -441,7 +440,9 @@ def export_tdoa_simulation_response_std(export_dir):
     plt.grid(color='lightgray', linestyle='dashed')
 
 
-    plt.gcf().set_size_inches(6.15, 5.0)
+    #oldplt.gcf().set_size_inches(6.15, 5.0)
+    plt.gcf().set_size_inches(5.9, 4.5)
+
     ticks = list(ax.get_yticks())
     labels = list(ax.get_yticklabels())
 
@@ -545,7 +546,7 @@ def export_tdoa_simulation_response_std(export_dir):
 
     # plt.ylim([0.0, 1.0])
     # plt.xlim([-0.5, 0.5])
-    # plt.ylim(0.2, 15)
+    #plt.ylim(0.0, 1.8)
 
     ax.set_axisbelow(True)
     ax.set_xlabel(r"Delay Ratio $\dfrac{D_B}{D_B+D_A}$")
@@ -661,22 +662,46 @@ def export_bias_comparison(export_dir):
             'a-p': los_noise,
             'b-p': los_noise,
         },
-        'NLOS-TWR': {
+        'A': {
             'a-b': nlos_noise,
             'b-a': nlos_noise,
             'a-p': los_noise,
             'b-p': los_noise,
         },
-        'NLOS-TDoA': {
+        'B': {
             'a-b': los_noise,
             'b-a': los_noise,
-            'a-p': los_noise,
-            'b-p': nlos_noise,
+            'a-p': nlos_noise,
+            'b-p': los_noise,
         },
-        'NLOS-Both': {
+        'C': {
             'a-b': nlos_noise,
             'b-a': nlos_noise,
             'a-p': los_noise,
+            'b-p': nlos_noise,
+        },
+        'AB': {
+            'a-b': nlos_noise,
+            'b-a': nlos_noise,
+            'a-p': nlos_noise,
+            'b-p': los_noise,
+        },
+        'AC': {
+            'a-b': nlos_noise,
+            'b-a': nlos_noise,
+            'a-p': los_noise,
+            'b-p': nlos_noise,
+        },
+        'BC': {
+            'a-b': los_noise,
+            'b-a': los_noise,
+            'a-p': nlos_noise,
+            'b-p': nlos_noise,
+        },
+        'ABC': {
+            'a-b': nlos_noise,
+            'b-a': nlos_noise,
+            'a-p': nlos_noise,
             'b-p': nlos_noise,
         }
     }
@@ -800,35 +825,42 @@ def export_bias_comparison(export_dir):
         sim_res[scenario] = drs[0]
         pred_res[scenario] = pred_rows[0]
 
-    fig, (ax1, ax2) = plt.subplots(1, 2, width_ratios=[1, 1], sharey=False)
+    fig, (ax1, ax2) = plt.subplots(1, 2, width_ratios=[1, 2], sharey=False)
     fig.subplots_adjust(hspace=0.01)
 
     # ax.xaxis.set_major_formatter(lambda x, pos: formatter(x))
     #ax1.yaxis.set_major_formatter(lambda x, pos: np.round(x * 100.0, 1))  # scale to cm
 
-    ax1.set_xlabel("Scenario")
+    ax1.set_xlabel("NLOS Multipath Scenario")
     ax1.set_ylabel('Mean Error [ns]')
     ax1.grid(color='lightgray', linestyle='dashed')
 
-    twr_sims = ['LOS', 'NLOS-TWR']
+    twr_sims = ['LOS', 'A']
     twr_xs = np.arange(len(twr_sims))
-    twr_means = { 'Simulated DS-TWR': [sim_res[x]['tof_bias_mean'] for x in twr_sims], 'Analytical DS-TWR': [pred_res[x]['predicted_tof_bias_mean'] for x in twr_sims]}
+    twr_means = { 'Analytical DS-TWR': [pred_res[x]['predicted_tof_bias_mean'] for x in twr_sims], 'Simulated DS-TWR': [sim_res[x]['tof_bias_mean'] for x in twr_sims]}
+    twr_stds = { 'Analytical DS-TWR': [pred_res[x]['predicted_tof_std'] for x in twr_sims], 'Simulated DS-TWR': [sim_res[x]['tof_std'] for x in twr_sims]}
     twr_sim_std = { x: sim_res[x]['tof_std'] for x in twr_sims}
     twr_pred_means = { }
     twr_pred_std = { x: pred_res[x]['predicted_tof_std'] for x in twr_sims}
 
-    tdoa_sims = ['LOS', 'NLOS-TWR', 'NLOS-TDoA', 'NLOS-Both']
+    #tdoa_sims = ['LOS', 'A', 'B', 'AB', 'C', 'AC', 'BC', 'ABC']
+    tdoa_sims = ['LOS', 'A', 'B', 'C', 'BC']
     tdoa_xs = np.arange(len(tdoa_sims))
-    tdoa_means = { 'Simulated DS-TDoA': [sim_res[x]['tdoa_ds_bias_mean'] for x in tdoa_sims], 'Analytical DS-TDoA': [pred_res[x]['predicted_tdoa_bias_mean'] for x in tdoa_sims]}
+    tdoa_means = { 'Analytical DS-TDoA': [pred_res[x]['predicted_tdoa_bias_mean'] for x in tdoa_sims], 'Simulated DS-TDoA': [sim_res[x]['tdoa_ds_bias_mean'] for x in tdoa_sims]}
+    tdoa_stds = { 'Analytical DS-TDoA': [pred_res[x]['predicted_tdoa_std'] for x in tdoa_sims], 'Simulated DS-TDoA': [sim_res[x]['tdoa_ds_std'] for x in tdoa_sims]}
 
     width = 0.25  # the width of the bars
     multiplier = 0
 
-
+    alpha = [1.0, 0.5]
     for attribute, measurement in twr_means.items():
-        offset = width * multiplier
-        rects = ax1.bar(twr_xs + offset, measurement, width, label=attribute) #yerr=twr_stds[multiplier], capsize=0)
+        offset = width * multiplier + 0.5 * width
+        rects = ax1.bar(twr_xs + offset, measurement, width, label=attribute, color='C4', alpha=alpha[multiplier]) #yerr=twr_stds[multiplier], capsize=0)
         #ax1.bar_label(rects, padding=3)
+        ax1.bar_label(rects, padding=2, fontsize=8, label_type='edge',
+                      labels=["{:.1f}\n[{:.1f}]".format(round(measurement[i], 1), round(twr_stds[attribute][i], 1)) for
+                              i in
+                              range(len(measurement))])
         multiplier += 1
 
     # counter = 0
@@ -849,38 +881,40 @@ def export_bias_comparison(export_dir):
 
     ax1.set_xticks(twr_xs + width, twr_sims)
 
-
-
+    ax1.set_ylim(-0.49, 2.249)
+    ax2.set_ylim(-2.45, 2.45)
 
 
     #ax1.legend(reverse=True)
     # plt.tight_layout()
 
-    ax2.set_xlabel("Scenario")
+
+    ax2.set_xlabel("NLOS Multipath Scenario")
     ax2.set_ylabel('Mean Error [ns]')
 
     ax2.grid(color='lightgray', linestyle='dashed')
 
-    width = 0.25  # the width of the bars
+    width = 0.33  # the width of the bars
     multiplier = 0
 
+    alpha=[1.0, 0.5]
+    hatch=[None, None]
     for attribute, measurement in tdoa_means.items():
-        offset = width * multiplier
-        rects = ax2.bar(tdoa_xs + offset, measurement, width, label=attribute)  # yerr=twr_stds[multiplier], capsize=0)
+        offset = width * multiplier + 0.5 * width
+        rects = ax2.bar(tdoa_xs + offset, measurement, width, label=attribute, color='C2', alpha=alpha[multiplier], hatch=hatch[multiplier])  # yerr=twr_stds[multiplier], capsize=0)
+        ax2.bar_label(rects, padding=2, fontsize=8, label_type='edge',
+                     labels=["{:.1f}\n[{:.1f}]".format(round(measurement[i], 1), round(tdoa_stds[attribute][i], 1)) for i in
+                             range(len(measurement))])
         # ax1.bar_label(rects, padding=3)
         multiplier += 1
 
     ax2.set_xticks(tdoa_xs + width, tdoa_sims)
-    plt.show()
-
 
     ax2.legend()
+
+
     # plt.tight_layout()
-
-
-
-
-    fig.set_size_inches(6.0, 2.5)
+    fig.set_size_inches(8.0, 4.5)
     fig.tight_layout()
     save_and_crop("{}/simulation_bias_nlos_scenarios.pdf".format(export_dir), bbox_inches='tight',
                   crop=True)
