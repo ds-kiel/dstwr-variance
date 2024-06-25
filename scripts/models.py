@@ -96,3 +96,26 @@ def calc_predicted_tof_std_navratil(a_b_std, b_a_std, delay_b, delay_a, distance
     return np.sqrt(var)
 
 
+# the noise map is a simple map from (tx, rx) to a tuple of mean and std and an optional function to sample from the underlying distribution, Gaussian by default
+def rx_noise_map_entry(rx_noise_map, tx, rx):
+    if isinstance(rx_noise_map, dict):
+        if "{}-{}".format(tx, rx) in rx_noise_map:
+            return rx_noise_map["{}-{}".format(tx, rx)]
+        else:
+            return rx_noise_map[(tx, rx)]
+    else:
+        return rx_noise_map
+
+def rx_noise_map_mean(rx_noise_map, tx, rx):
+    return rx_noise_map_entry(rx_noise_map, tx, rx)[0]
+
+def rx_noise_map_std(rx_noise_map, tx, rx):
+    return rx_noise_map_entry(rx_noise_map, tx, rx)[1]
+
+def rx_noise_map_sample(rx_noise_map, tx, rx):
+    entry = rx_noise_map_entry(rx_noise_map, tx, rx)
+
+    if len(entry) == 2:
+        return np.random.normal(loc=entry[0], scale=entry[1])
+    elif len(entry) == 3 and callable(entry[2]):
+        return entry[2](**{'tx': tx, 'rx': rx, 'loc': entry[0], 'scale': entry[1]})
