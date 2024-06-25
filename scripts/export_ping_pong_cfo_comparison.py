@@ -541,7 +541,7 @@ def export_passive_combined_duration(export_dir):
     ax2.yaxis.set_major_formatter(lambda x, pos: np.round(x * 100.0, 1))  # scale to cm
 
     ax2.set_xlabel(r"$D_B$ [ms]")
-    ax2.set_ylabel('SD [cm]')
+    ax2.set_ylabel('Sample SD [cm]')
 
     ax2.grid(color='lightgray', linestyle='dashed')
 
