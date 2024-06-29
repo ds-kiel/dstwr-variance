@@ -965,7 +965,7 @@ def gen_tdma_twr_resp_delays_records(testbed, run, tdoa_src_dev_number=None, bia
                     #print(rec)
                     yield rec
 
-def gen_tdma_twr_records(testbed, run, tdoa_src_dev_number=None, bias_corrected=True, experiment='RESP_DELAYS'):
+def gen_tdma_twr_records(testbed, run, tdoa_src_dev_number=None, bias_corrected=True):
 
     for (r, rx_events, tx_events) in gen_round_events(testbed, run):
         rx_df = pd.DataFrame.from_records(rx_events)

@@ -2,6 +2,8 @@
 
 This project contains the PoC for ALADIN: All-to-all Linear Antenna Delay Inference on Ultra-Wideband Devices. It is currently under revision and clean-up.
 
+TODO: Get the source code from the zephyr-uwb repository!!
+
 
 ## Setup
 Setup Zephyr and West as usual. As the Decawave Driver does not allow precise timings, we added some overrides which need to be manually applied (see override directory). As an alternative, you can checkout the related [Zephyr feature branch](https://github.com/prathje/zephyr/tree/feature/dwm_1001_ranging_api).

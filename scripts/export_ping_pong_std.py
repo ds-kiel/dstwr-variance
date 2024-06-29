@@ -1238,7 +1238,7 @@ def export_third_std_graph(export_dir):
     ax.set_xlabel(r"Delay Ratio $\dfrac{D_B}{D_B+D_A}$")
     #ax1.set_ylabel('SD [cm]')
     ax.set_ylabel('SD [cm]')
-
+    ax.tick_params(top=True, labeltop=False, bottom=True, labelbottom=True, which="both")
     ax.xaxis.set_major_locator(plt.MultipleLocator(0.25))
     ax.xaxis.set_minor_locator(plt.MultipleLocator(0.125))
 
@@ -1266,6 +1266,7 @@ def export_third_std_graph(export_dir):
     handles.insert(1, line)
     # legend on the side!ax2.legend(handles=handles, reverse=True, loc='center left', bbox_to_anchor=(1, 0.5))
     ax.legend(handles=handles, reverse=True, ncols=2)
+
     # plt.tight_layout()
 
     # ax.set_ylim([0.0, 0.25])
@@ -1282,8 +1283,8 @@ if __name__ == '__main__':
         init_cache(config['CACHE_DIR'])
 
     #export_first_std_graph(config['EXPORT_DIR'])
-    export_second_std_graph(config['EXPORT_DIR'])
-    #export_third_std_graph(config['EXPORT_DIR'])
+    #export_second_std_graph(config['EXPORT_DIR'])
+    export_third_std_graph(config['EXPORT_DIR'])
     #export_delay_exp_ping_pong(config['EXPORT_DIR'])
 
 
