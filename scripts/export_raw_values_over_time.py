@@ -216,7 +216,7 @@ def export_raw_values_and_aggregate(export_dir):
     passive_df = pd.concat(dfs, ignore_index=True, copy=True)
 
 
-    df_3_4 = prepare_df(active_df, initiator=3, responder=4)
+    df_3_4 = prepare_df(active_df, initiator=3, responder=1)
     df_3_6 = prepare_df(active_df, initiator=3, responder=6)
     df_3_6_passive_0 = prepare_df(passive_df, initiator=3, responder=4)
 
@@ -234,9 +234,9 @@ def export_raw_values_and_aggregate(export_dir):
     df_3_6_passive_0_errs = list(df_3_6_passive_0['tdoa_est_ds_err'])[0:num_samples]
 
 
-    ax1.scatter(list(range(len(df_3_6_passive_0_errs))), df_3_6_passive_0_errs, label=f"DS-TDoA", alpha=1.0, s=2.0, color=colors[2])
-    ax1.scatter(list(range(len(df_3_4_errs))), df_3_4_errs, label=f"DS-TWR", alpha=1.0, s=2.0, color=colors[0])
     ax1.scatter(list(range(len(df_3_6_errs))), df_3_6_errs, label=f"DS-TWR Multipath", alpha=1.0, s=2.0, color=colors[1])
+    ax1.scatter(list(range(len(df_3_4_errs))), df_3_4_errs, label=f"DS-TWR", alpha=1.0, s=2.0, color=colors[0])
+    ax1.scatter(list(range(len(df_3_6_passive_0_errs))), df_3_6_passive_0_errs, label=f"DS-TDoA", alpha=1.0, s=2.0, color=colors[2])
 
     ax1.set_ylabel('Error [m]')
     ax1.set_xlabel('Measurement')
@@ -263,7 +263,7 @@ def export_raw_values_and_aggregate(export_dir):
                  labels=["{:.2f}\n[{:.2f}]".format(np.round(meas[i], 2), np.round(stds[i], 2)) for i
                          in range(len(meas))])
 
-    lgnd = ax1.legend(framealpha=0.75, reverse=True)
+    lgnd = ax1.legend(framealpha=0.75, reverse=False)
     for handle in lgnd.legend_handles:
         handle.set_sizes([8.0])
 
@@ -272,7 +272,7 @@ def export_raw_values_and_aggregate(export_dir):
     ax2.grid(color='lightgray', linestyle='dashed')
 
 
-    fig.set_size_inches(6.0, 4.0)
+    fig.set_size_inches(6.0, 3.5)
     fig.tight_layout()
     # ax.set_ylim([0.016, 0.05])
     save_and_crop("{}/raw_comparison.pdf".format(export_dir), bbox_inches='tight', crop=True)
@@ -319,7 +319,7 @@ if __name__ == '__main__':
     assert 'EXPORT_DIR' in config and config['EXPORT_DIR']
     if 'CACHE_DIR' in config and config['CACHE_DIR']:
         init_cache(config['CACHE_DIR'])
-    raw_histogram(config['EXPORT_DIR'])
-    #export_raw_values_and_aggregate(config['EXPORT_DIR'])
+    #raw_histogram(config['EXPORT_DIR'])
+    export_raw_values_and_aggregate(config['EXPORT_DIR'])
     #export_std_over_duration_increase(config['EXPORT_DIR'])
     #export_raw_values_over_time(config['EXPORT_DIR'])

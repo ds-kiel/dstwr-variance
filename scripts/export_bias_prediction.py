@@ -67,6 +67,7 @@ def compute_active_means_and_stds(active_df, skip_to_round=None):
         count=pd.NamedAgg(column='estimated_m', aggfunc="count"),
         dist=pd.NamedAgg(column='dist', aggfunc="min"),
         estimated_m=pd.NamedAgg(column='estimated_m', aggfunc="mean"),
+        std=pd.NamedAgg(column='estimated_m', aggfunc="std"),
         initiator=pd.NamedAgg(column='initiator', aggfunc="min"),
         responder=pd.NamedAgg(column='responder', aggfunc="min"),
     )
@@ -108,7 +109,52 @@ def get_df(log, tdoa_src_dev_number):
 
 
     return utility.cached_dt_legacy(  # todo: this was 3
-        ('export_bias_prediction_1', log, tdoa_src_dev_number), proc)
+        ('export_bias_prediction_7', log, tdoa_src_dev_number), proc)
+
+
+def export_trento_a_pairs( export_dir):
+
+    skip_to_round = 0  # 200?
+    use_bias_correction = True
+
+    twr_df = get_df('2024-06-27_twr/job_18297.tar.gz', tdoa_src_dev_number=None)
+
+    # remove device 5 from the list of devices as it is not working atm....
+    twr_df = twr_df[twr_df['initiator'] != 5]
+    twr_df = twr_df[twr_df['responder'] != 5]
+    twr_df = compute_active_means_and_stds(twr_df, skip_to_round)
+
+    twr_df = twr_df.sort_values(by='bias')
+
+    print(twr_df['bias'].mean())
+    # ALADIN MEAN: 3.218922551532799
+    aladin_mean_m = 0.03218922551532799
+
+    dstwr_mean = twr_df['bias'].mean()
+    offset = aladin_mean_m - dstwr_mean
+    print("offset", offset)
+    # MEAN: 0.29808306254740136
+
+    def rename_pairs(x=None):
+        return '{}-{}'.format(int(x['initiator']+1), int(x['responder']+1))
+
+    plt.clf()
+    twr_df['pair'] = twr_df.apply(rename_pairs, axis=1)
+    # df.plot.bar(x='pair',y=['dist', 'est_distance_uncalibrated', 'est_distance_factory', 'est_distance_calibrated'])
+    twr_df.plot.bar(x='pair', y=['bias'], yerr='std', width=0.75)
+
+    plt.legend()
+    plt.xlabel("Pair")
+    plt.ylabel("Error [cm]")
+
+    plt.gcf().set_size_inches(5.0, 4.0)
+    plt.tight_layout()
+
+    plt.gca().yaxis.grid(True, color='lightgray', linestyle='dashed')
+
+    plt.savefig("{}/bias_sorted.pdf".format(export_dir), bbox_inches = 'tight', pad_inches = 0)
+    plt.close()
+
 
 
 
@@ -122,6 +168,18 @@ def export_bias_prediction( export_dir):
     twr_df = twr_df[twr_df['initiator'] != 5]
     twr_df = twr_df[twr_df['responder'] != 5]
 
+    twr_dict = compute_active_means_and_stds(twr_df, skip_to_round).to_dict(index=True, orient='index')
+
+    # device 5 replacement biases
+    dev_5_biase = {
+        '5-0': -19.657862,
+        '5-3': -6.006686,
+        '5-4': 1.091985,
+        '5-1': 3.396395,
+        '5-2': 0.486418,
+        '6-5': 10.817341,
+    }
+
     tdoa_dfs = {i: get_df('2024-06-27_twr/job_18233.tar.gz', i) for i in range(len(trento_a.devs)) if i != 5}
 
     for k in tdoa_dfs:
@@ -130,7 +188,6 @@ def export_bias_prediction( export_dir):
         tdoa_dfs[k] = tdoa_dfs[k][tdoa_dfs[k]['responder'] != 5]
 
 
-    twr_dict = compute_active_means_and_stds(twr_df, skip_to_round).to_dict(index=True, orient='index')
     tdoa_dicts = {k: compute_passive_means_and_stds(tdoa_dfs[k], skip_to_round).to_dict(index=True, orient='index') for k in tdoa_dfs}
 
     delay_a = 0.0075
@@ -161,9 +218,19 @@ def export_bias_prediction( export_dir):
     errors = []
     devices = []
     tdoas = []
+    twr_actuals = []
 
 
     filter_active_dev = 3
+
+    for pair in twr_dict:
+
+        a, b = tuple(pair.split('-'))
+        a = int(a)
+        b = int(b)
+
+        twr_actuals.append(twr_dict['{}-{}'.format(a, b)]['bias'])
+
 
     for p in tdoa_dicts:
         for pair in tdoa_dicts[p]:
@@ -171,6 +238,7 @@ def export_bias_prediction( export_dir):
             a, b = tuple(pair.split('-'))
             a = int(a)
             b = int(b)
+
 
             if p not in [a, b] and (filter_active_dev is None or filter_active_dev in [a, b]):
                 pred = calc_expected_td_bias(a, b, p)
@@ -184,17 +252,18 @@ def export_bias_prediction( export_dir):
                 tdoas.append(tdoa_dicts[p][pair]['tdoa'])
 
     for (a,b,p), pred, actual, error in zip(devices, preds, actuals, errors):
-        s = "${ini} \\rightarrow {resp}$ & ${pred_bias_mean:.3f}cm$ & ${sample_bias_mean:.3f}cm$ & ${error:.3f}cm$ \\\\"
+        s = "${ini} \\rightarrow {resp}$ & ${pred_bias_mean:.3f}$ & ${sample_bias_mean:.3f}$ & ${error:.3f}$ \\\\"
         print(s.format(ini=a+1, resp=b+1, pred_bias_mean=round(pred, 3), sample_bias_mean=round(actual, 3), error=round(error, 3)))
 
 
+    print("MAE TWR ACTUAL Bias", np.mean(np.abs(twr_actuals)))
     print("Count", len(preds))
-    print("RMSE", np.sqrt(np.mean(np.array(errors)**2)))
-    print("MAE ERROR", np.mean(np.abs(errors)))
-    print("MAE BIAS", np.mean(np.abs(actuals)))
-    print("Max Abs Error", np.max(np.abs(errors)))
-    print("Min Abs Error", np.min(np.abs(errors)))
-    print("Max Actual", np.max(np.abs(actuals)))
+    print("PRED RMSE", np.sqrt(np.mean(np.array(errors)**2)))
+    print("MAE TDOA PREDICTION ERROR", np.mean(np.abs(errors)))
+    print("MAE TDOA BIAS", np.mean(np.abs(actuals)))
+    print("Max TDOA Abs Error", np.max(np.abs(errors)))
+    print("Min TDOA Abs Error", np.min(np.abs(errors)))
+    print("Max TDOA Actual", np.max(np.abs(actuals)))
 
 
     # 6 0-1
@@ -274,6 +343,7 @@ if __name__ == '__main__':
     if 'CACHE_DIR' in config and config['CACHE_DIR']:
         init_cache(config['CACHE_DIR'])
 
+    export_trento_a_pairs(config['EXPORT_DIR'])
     export_bias_prediction(config['EXPORT_DIR'])
 
 

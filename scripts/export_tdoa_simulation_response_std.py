@@ -829,10 +829,10 @@ def export_bias_comparison(export_dir):
         sim_res[scenario] = drs[0]
         pred_res[scenario] = pred_rows[0]
     #
-    # fig, (ax1, ax2) = plt.subplots(1, 2, width_ratios=[1, 2], sharey=False)
-    # fig.subplots_adjust(hspace=0.01)
+    fig, (ax1, ax2) = plt.subplots(1, 2, width_ratios=[1, 2], sharey=False)
+    #fig.subplots_adjust(hspace=0.01)
 
-    fig, ax1 = plt.subplots()
+    #fig, ax1 = plt.subplots()
 
     # ax.xaxis.set_major_formatter(lambda x, pos: formatter(x))
     #ax1.yaxis.set_major_formatter(lambda x, pos: np.round(x * 100.0, 1))  # scale to cm
@@ -890,16 +890,16 @@ def export_bias_comparison(export_dir):
 
     ax1.set_xticks(twr_xs + width, twr_sims)
 
-    ax1.set_ylim(-0.19, 2.49)
+    ax1.set_ylim(-0.19, 2.45)
 
-    fig.set_size_inches(3.0, 3.0)
-    fig.tight_layout()
-    save_and_crop("{}/simulation_bias_nlos_scenarios_twr.pdf".format(export_dir), bbox_inches='tight',
-                  crop=True)
+    # fig.set_size_inches(3.0, 3.0)
+    # fig.tight_layout()
+    # save_and_crop("{}/simulation_bias_nlos_scenarios_twr.pdf".format(export_dir), bbox_inches='tight',
+    #               crop=True)
 
-    plt.clf()
+    #plt.clf()
 
-    fig, ax2 = plt.subplots()
+    #fig, ax2 = plt.subplots()
     ax2.set_ylim(-2.45, 2.45)
 
     #ax1.legend(reverse=True)
@@ -930,7 +930,7 @@ def export_bias_comparison(export_dir):
 
     ax2.legend(labelcolor=labelcolors)
 
-    fig.set_size_inches(4.5, 4.43)
+    fig.set_size_inches(8.5, 4.43)
     fig.tight_layout()
     save_and_crop("{}/simulation_bias_nlos_scenarios_tdoa.pdf".format(export_dir), bbox_inches='tight',
                   crop=True)

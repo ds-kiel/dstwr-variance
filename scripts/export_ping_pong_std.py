@@ -42,7 +42,7 @@ def get_df(log, tdoa_src_dev_number, max_slots_dur):
 
 
     return utility.cached_dt_legacy(  # todo: this was 3
-        ('extract_job_tdma_ping_pong_4', log, tdoa_src_dev_number, use_bias_correction, max_slots_dur), proc)
+        ('extract_job_tdma_ping_pong_5', log, tdoa_src_dev_number, use_bias_correction, max_slots_dur), proc)
 
 
 
@@ -1282,8 +1282,8 @@ if __name__ == '__main__':
     if 'CACHE_DIR' in config and config['CACHE_DIR']:
         init_cache(config['CACHE_DIR'])
 
-    #export_first_std_graph(config['EXPORT_DIR'])
-    #export_second_std_graph(config['EXPORT_DIR'])
+    export_first_std_graph(config['EXPORT_DIR'])
+    export_second_std_graph(config['EXPORT_DIR'])
     export_third_std_graph(config['EXPORT_DIR'])
     #export_delay_exp_ping_pong(config['EXPORT_DIR'])
 
