@@ -168,6 +168,8 @@ def export_bias_prediction( export_dir):
     twr_df = twr_df[twr_df['initiator'] != 5]
     twr_df = twr_df[twr_df['responder'] != 5]
 
+    print("NUM ROUND", twr_df['round'].max() - twr_df['round'].min())
+
     twr_dict = compute_active_means_and_stds(twr_df, skip_to_round).to_dict(index=True, orient='index')
 
     # device 5 replacement biases

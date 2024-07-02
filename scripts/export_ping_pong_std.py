@@ -1282,10 +1282,10 @@ if __name__ == '__main__':
     if 'CACHE_DIR' in config and config['CACHE_DIR']:
         init_cache(config['CACHE_DIR'])
 
+    export_delay_exp_ping_pong(config['EXPORT_DIR'])
     export_first_std_graph(config['EXPORT_DIR'])
     export_second_std_graph(config['EXPORT_DIR'])
     export_third_std_graph(config['EXPORT_DIR'])
-    #export_delay_exp_ping_pong(config['EXPORT_DIR'])
 
 
 

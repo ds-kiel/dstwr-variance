@@ -32,15 +32,18 @@ def cache_df(log, tdoa_src_dev_number, max_slots_dur):
         df = pd.DataFrame.from_records(it)
         return add_df_cols(df, tdoa_src_dev_number)
 
-    return utility.cached_dt_legacy( #todo: this was 3
-        ('extract_job_tdma_ping_pong_4', log, tdoa_src_dev_number, use_bias_correction, max_slots_dur), proc)
+
+    return utility.cached_dt_legacy(  # todo: this was 3
+        ('extract_job_tdma_ping_pong_5', log, tdoa_src_dev_number, use_bias_correction, max_slots_dur), proc)
+
 
 
 use_bias_correction = True
 
 #max_slot_durs = [66, 22, 44, 88, 98, 102]
-max_slot_durs = list(range(18, 42+1, 8))
+#max_slot_durs = list(range(18, 42+1, 8))
 #max_slot_durs = list(range(10, 26, 4))
+max_slot_durs = [42]
 
 # dev 3 is our initiator
 passive_devices = [None, 0, 1, 2, 4, 5, 6]
@@ -50,12 +53,12 @@ logfiles = [
         '2024-02-28_ping_pong_200/job_11986.tar.gz',
         '2024-02-28_ping_pong_200/job_11987.tar.gz',
         '2024-02-28_ping_pong_200/job_11988.tar.gz',
-        # '2024-02-28_ping_pong_200/job_11989.tar.gz',
-        # '2024-02-28_ping_pong_200/job_11990.tar.gz',
-        # '2024-02-28_ping_pong_200/job_11991.tar.gz',
-        # '2024-02-28_ping_pong_200/job_11992.tar.gz',
-        # '2024-02-28_ping_pong_200/job_11993.tar.gz',
-        # '2024-02-28_ping_pong_200/job_11994.tar.gz',
+        '2024-02-28_ping_pong_200/job_11989.tar.gz',
+        '2024-02-28_ping_pong_200/job_11990.tar.gz',
+        '2024-02-28_ping_pong_200/job_11991.tar.gz',
+        '2024-02-28_ping_pong_200/job_11992.tar.gz',
+        '2024-02-28_ping_pong_200/job_11993.tar.gz',
+        '2024-02-28_ping_pong_200/job_11994.tar.gz',
         # '2024-02-28_ping_pong_200/job_11995.tar.gz',
         # '2024-02-28_ping_pong_200/job_11996.tar.gz',
         # '2024-02-28_ping_pong_200/job_11997.tar.gz',
@@ -85,7 +88,7 @@ if __name__ == "__main__":
     import itertools
     config = load_env_config()
 
-    print("V 2")
+    print("V 3")
 
     assert 'EXPORT_DIR' in config and config['EXPORT_DIR']
 
