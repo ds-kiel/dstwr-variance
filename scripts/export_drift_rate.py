@@ -67,7 +67,7 @@ def get_noise_df(log, max_slots_dur, use_bias_correction=True):
         df = pd.DataFrame.from_records(it)
         return df
 
-    df = utility.cached_dt_legacy(('get_noise_df_12', log, use_bias_correction, max_slots_dur), proc)
+    df = utility.cached_dt_legacy(('get_noise_df_13', log, use_bias_correction, max_slots_dur), proc)
     df['dur_ms'] = max_slots_dur * 0.75
 
     return df

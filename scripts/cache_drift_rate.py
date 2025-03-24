@@ -27,21 +27,22 @@ from export import add_df_cols
 from export_drift_rate import get_noise_df
 use_bias_correction = True
 
-max_slot_durs = list(range(10, 201, 4))
+#max_slot_durs = list(range(10, 201, 4))
 #max_slot_durs = list(range(74, 90+1, 4))
 #max_slot_durs = list(range(10, 26, 4))
+max_slot_durs = [82]
 
 logfiles = [
         '2024-02-28_ping_pong_200/job_11985.tar.gz',
         '2024-02-28_ping_pong_200/job_11986.tar.gz',
         '2024-02-28_ping_pong_200/job_11987.tar.gz',
         '2024-02-28_ping_pong_200/job_11988.tar.gz',
-        '2024-02-28_ping_pong_200/job_11989.tar.gz',
-        '2024-02-28_ping_pong_200/job_11990.tar.gz',
-        '2024-02-28_ping_pong_200/job_11991.tar.gz',
-        '2024-02-28_ping_pong_200/job_11992.tar.gz',
-        '2024-02-28_ping_pong_200/job_11993.tar.gz',
-        '2024-02-28_ping_pong_200/job_11994.tar.gz',
+        # '2024-02-28_ping_pong_200/job_11989.tar.gz',
+        # '2024-02-28_ping_pong_200/job_11990.tar.gz',
+        # '2024-02-28_ping_pong_200/job_11991.tar.gz',
+        # '2024-02-28_ping_pong_200/job_11992.tar.gz',
+        # '2024-02-28_ping_pong_200/job_11993.tar.gz',
+        # '2024-02-28_ping_pong_200/job_11994.tar.gz',
         # '2024-02-28_ping_pong_200/job_11995.tar.gz',
         # '2024-02-28_ping_pong_200/job_11996.tar.gz',
         # '2024-02-28_ping_pong_200/job_11997.tar.gz',
@@ -70,7 +71,7 @@ if __name__ == "__main__":
     import itertools
     config = load_env_config()
 
-    print("V 2")
+    print("V 3")
 
     assert 'EXPORT_DIR' in config and config['EXPORT_DIR']
 
