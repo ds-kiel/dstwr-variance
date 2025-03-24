@@ -86,6 +86,16 @@ def sim_exchange(a, b, resp_delay_s=RESP_DELAY_S, node_drift_std=NODE_DRIFT_STD,
     def calc_drifted_dur_passive(dur):
         return dur * passive_node_drift + np.random.normal(loc=0.0, scale=drift_rate_std*dur)
 
+    if False:
+        from numpy.random import multivariate_normal
+
+        # Covariance matrix for correlated noise
+        cov_matrix = np.array([[sigma_t ** 2, 0, -sigma_t ** 2, 0],
+                               [0, sigma_t ** 2, 0, -sigma_t ** 2],
+                               [-sigma_t ** 2, 0, sigma_t ** 2, 0],
+                               [0, -sigma_t ** 2, 0, sigma_t ** 2]])
+
+
 
     a_actual_poll_tx = 0
     b_actual_poll_rx = a_actual_poll_tx + t + sample_rx_noise('a', 'b')
