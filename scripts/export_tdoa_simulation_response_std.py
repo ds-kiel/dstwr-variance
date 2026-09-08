@@ -866,7 +866,7 @@ def export_bias_comparison(export_dir):
         draw_bars(ax, twr_xs, twr_sims, twr_means, twr_stds, 'C4', (-0.19, 2.45))
 
     def draw_tdoa(ax):
-        draw_bars(ax, tdoa_xs, tdoa_sims, tdoa_means, tdoa_stds, 'C2', (-2.45, 2.45), label_fontsize=7)
+        draw_bars(ax, tdoa_xs, tdoa_sims, tdoa_means, tdoa_stds, 'C2', (-2.45, 2.45))
 
     def export_fig(fig, name):
         fig.tight_layout()
@@ -888,7 +888,7 @@ def export_bias_comparison(export_dir):
 
     fig, ax = plt.subplots()
     draw_tdoa(ax)
-    fig.set_size_inches(4.7, 4.43)  # fits .38\linewidth at scale=0.5 in the paper
+    fig.set_size_inches(6.25, 4.43)  # fits .53\linewidth at scale=0.5 in the paper
     export_fig(fig, 'simulation_bias_nlos_scenarios_tdoa')
 
 
