@@ -24,19 +24,17 @@ The paper derives the bias and variance of Double-Sided Two-Way Ranging (DS-TWR)
 
 ## Reproducing the figures
 
-Python 3.10 or newer is required. Create an environment and install the dependencies:
+Dependencies are managed with [uv](https://docs.astral.sh/uv/), which installs a matching Python (3.10 or newer) and the locked packages from `uv.lock` on first use:
 
 ```bash
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
+uv sync
 ```
 
 Output and cache directories are configured in `.env` (`EXPORT_DIR=export`, `CACHE_DIR=cache`). All scripts are run from the repository root:
 
 ```bash
-./export_all.sh                     # all figures
-python3 scripts/export_nlos_sweep.py   # or a single figure
+./export_all.sh                        # all figures
+uv run scripts/export_nlos_sweep.py    # or a single figure
 ```
 
 The scripts use the cached intermediate results in `cache/`. Delete the corresponding cache file to recompute a figure from the raw logs or to rerun a simulation. Cropped variants (`*_cropped.pdf`) are produced with `pdfcrop` from TeX Live when it is available on the `PATH`.

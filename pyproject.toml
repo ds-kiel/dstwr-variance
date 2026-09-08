@@ -1,0 +1,19 @@
+[project]
+name = "dstwr-variance"
+version = "1.0.0"
+description = "Simulation, data processing, and plotting scripts for 'Precise Ranging: Modeling Bias and Variance of Double-Sided Two-Way Ranging with TDoA Extraction under Multipath and NLOS Effects'"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "numpy",
+    "pandas",
+    "scipy",
+    "matplotlib",
+    "seaborn",
+    "pillow",
+    "progressbar2",
+    "python-dotenv",
+]
+
+[tool.uv]
+package = false
