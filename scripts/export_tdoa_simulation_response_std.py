@@ -828,114 +828,69 @@ def export_bias_comparison(export_dir):
 
         sim_res[scenario] = drs[0]
         pred_res[scenario] = pred_rows[0]
-    #
-    fig, (ax1, ax2) = plt.subplots(1, 2, width_ratios=[1, 2], sharey=False)
-    #fig.subplots_adjust(hspace=0.01)
-
-    #fig, ax1 = plt.subplots()
-
-    # ax.xaxis.set_major_formatter(lambda x, pos: formatter(x))
-    #ax1.yaxis.set_major_formatter(lambda x, pos: np.round(x * 100.0, 1))  # scale to cm
-
-    ax1.set_xlabel("NLOS Multipath Scenario")
-    ax1.set_ylabel('Mean Error [ns]')
-    ax1.grid(color='lightgray', linestyle='dashed')
-
     twr_sims = ['LOS', 'A']
     twr_xs = np.arange(len(twr_sims))
-    twr_means = { 'Analytical DS-TWR': [pred_res[x]['predicted_tof_bias_mean'] for x in twr_sims], 'Simulated DS-TWR': [sim_res[x]['tof_bias_mean'] for x in twr_sims]}
-    twr_stds = { 'Analytical DS-TWR': [pred_res[x]['predicted_tof_std'] for x in twr_sims], 'Simulated DS-TWR': [sim_res[x]['tof_std'] for x in twr_sims]}
-    twr_sim_std = { x: sim_res[x]['tof_std'] for x in twr_sims}
-    twr_pred_means = { }
-    twr_pred_std = { x: pred_res[x]['predicted_tof_std'] for x in twr_sims}
+    twr_means = {'Analytical DS-TWR': [pred_res[x]['predicted_tof_bias_mean'] for x in twr_sims],
+                 'Simulated DS-TWR': [sim_res[x]['tof_bias_mean'] for x in twr_sims]}
+    twr_stds = {'Analytical DS-TWR': [pred_res[x]['predicted_tof_std'] for x in twr_sims],
+                'Simulated DS-TWR': [sim_res[x]['tof_std'] for x in twr_sims]}
 
-    #tdoa_sims = ['LOS', 'A', 'B', 'AB', 'C', 'AC', 'BC', 'ABC']
     tdoa_sims = ['LOS', 'A', 'B', 'AB', 'C', 'AC', 'BC', 'ABC']
     tdoa_xs = np.arange(len(tdoa_sims))
-    tdoa_means = { 'Analytical DS-TDoA': [pred_res[x]['predicted_tdoa_bias_mean'] for x in tdoa_sims], 'Simulated DS-TDoA': [sim_res[x]['tdoa_ds_bias_mean'] for x in tdoa_sims]}
-    tdoa_stds = { 'Analytical DS-TDoA': [pred_res[x]['predicted_tdoa_std'] for x in tdoa_sims], 'Simulated DS-TDoA': [sim_res[x]['tdoa_ds_std'] for x in tdoa_sims]}
+    tdoa_means = {'Analytical DS-TDoA': [pred_res[x]['predicted_tdoa_bias_mean'] for x in tdoa_sims],
+                  'Simulated DS-TDoA': [sim_res[x]['tdoa_ds_bias_mean'] for x in tdoa_sims]}
+    tdoa_stds = {'Analytical DS-TDoA': [pred_res[x]['predicted_tdoa_std'] for x in tdoa_sims],
+                 'Simulated DS-TDoA': [sim_res[x]['tdoa_ds_std'] for x in tdoa_sims]}
 
     width = 0.45  # the width of the bars
-    multiplier = 0
-
     alpha = [1.0, 0.5]
     labelcolors = ['black', 'gray']
-    for attribute, measurement in twr_means.items():
-        offset = width * multiplier + 0.5 * width
-        rects = ax1.bar(twr_xs + offset, measurement, width, label=attribute, color='C4', alpha=alpha[multiplier]) #yerr=twr_stds[multiplier], capsize=0)
-        #ax1.bar_label(rects, padding=3)
-        ax1.bar_label(rects, padding=2, fontsize=8, label_type='edge',
-                      labels=["{:.1f}\n[{:.1f}]".format(round(measurement[i], 1), round(twr_stds[attribute][i], 1)) for
-                              i in
-                              range(len(measurement))], color=labelcolors[multiplier])
-        multiplier += 1
 
+    def draw_bars(ax, xs, sims, means, stds, color, ylim, label_fontsize=8):
+        # mean error as bar height, standard deviation in brackets above each bar
+        ax.set_xlabel("NLOS Multipath Scenario")
+        ax.set_ylabel('Mean Error [ns]')
+        ax.grid(color='lightgray', linestyle='dashed')
+        for multiplier, (attribute, measurement) in enumerate(means.items()):
+            offset = width * multiplier + 0.5 * width
+            rects = ax.bar(xs + offset, measurement, width, label=attribute, color=color, alpha=alpha[multiplier])
+            ax.bar_label(rects, padding=2, fontsize=label_fontsize, label_type='edge',
+                         labels=["{:.1f}\n[{:.1f}]".format(round(measurement[i], 1), round(stds[attribute][i], 1))
+                                 for i in range(len(measurement))],
+                         color=labelcolors[multiplier])
+        ax.set_xticks(xs + width, sims)
+        ax.set_ylim(*ylim)
+        ax.legend(labelcolor=labelcolors)
 
+    def draw_twr(ax):
+        draw_bars(ax, twr_xs, twr_sims, twr_means, twr_stds, 'C4', (-0.19, 2.45))
 
-    # counter = 0
-    # for p in ax1.patches:
-    #     height = p.get_height()
-    #
-    #
-    #     if np.isnan(height):
-    #         height = 0
-    #
-    #     ax1.text(p.get_x() + p.get_width() / 2., height + (twr_sim_std + twr_pred_std)[counter],
-    #             "{:.1f}\n[{:.1f}]".format(height, (twr_sim_std + twr_pred_std)[counter]), fontsize=9, color='black', ha='center',
-    #             va='bottom')
-    #
-    #     # ax.text(p.get_x() + p.get_width()/2., 0.5, '%.2f' % stds[offset], fontsize=12, color='black', ha='center', va='bottom')
-    #     counter += 1
-    ax1.legend(labelcolor=labelcolors)
+    def draw_tdoa(ax):
+        draw_bars(ax, tdoa_xs, tdoa_sims, tdoa_means, tdoa_stds, 'C2', (-2.45, 2.45), label_fontsize=7)
 
-    ax1.set_xticks(twr_xs + width, twr_sims)
+    def export_fig(fig, name):
+        fig.tight_layout()
+        save_and_crop("{}/{}.pdf".format(export_dir, name), bbox_inches='tight', crop=True)
+        plt.close(fig)
 
-    ax1.set_ylim(-0.19, 2.45)
-
-    # fig.set_size_inches(3.0, 3.0)
-    # fig.tight_layout()
-    # save_and_crop("{}/simulation_bias_nlos_scenarios_twr.pdf".format(export_dir), bbox_inches='tight',
-    #               crop=True)
-
-    #plt.clf()
-
-    #fig, ax2 = plt.subplots()
-    ax2.set_ylim(-2.45, 2.45)
-
-    #ax1.legend(reverse=True)
-    # plt.tight_layout()
-
-
-    ax2.set_xlabel("NLOS Multipath Scenario")
-    ax2.set_ylabel('Mean Error [ns]')
-
-    ax2.grid(color='lightgray', linestyle='dashed')
-
-    width = 0.45  # the width of the bars
-    multiplier = 0
-
-    alpha=[1.0, 0.5]
-    labelcolors=['black', 'gray']
-    hatch=[None, None]
-    for attribute, measurement in tdoa_means.items():
-        offset = width * multiplier + 0.5 * width
-        rects = ax2.bar(tdoa_xs + offset, measurement, width, label=attribute, color='C2', alpha=alpha[multiplier], hatch=hatch[multiplier])  # yerr=twr_stds[multiplier], capsize=0)
-        ax2.bar_label(rects, padding=2, fontsize=8, label_type='edge',
-                     labels=["{:.1f}\n[{:.1f}]".format(round(measurement[i], 1), round(tdoa_stds[attribute][i], 1)) for i in
-                             range(len(measurement))], color=labelcolors[multiplier])
-        # ax1.bar_label(rects, padding=3)
-        multiplier += 1
-
-    ax2.set_xticks(tdoa_xs + width, tdoa_sims)
-
-    ax2.legend(labelcolor=labelcolors)
-
+    # combined figure: DS-TWR (left) and DS-TDoA (right)
+    fig, (ax1, ax2) = plt.subplots(1, 2, width_ratios=[1, 2], sharey=False)
+    draw_twr(ax1)
+    draw_tdoa(ax2)
     fig.set_size_inches(8.5, 4.43)
-    fig.tight_layout()
-    save_and_crop("{}/simulation_bias_nlos_scenarios_tdoa.pdf".format(export_dir), bbox_inches='tight',
-                  crop=True)
+    export_fig(fig, 'simulation_bias_nlos_scenarios')
 
-    plt.close()
+    # separate figures as used in the paper (fig:sim_bias_twr, fig:sim_bias_td)
+    fig, ax = plt.subplots()
+    draw_twr(ax)
+    fig.set_size_inches(3.0, 3.0)
+    export_fig(fig, 'simulation_bias_nlos_scenarios_twr')
+
+    fig, ax = plt.subplots()
+    draw_tdoa(ax)
+    fig.set_size_inches(4.7, 4.43)  # fits .38\linewidth at scale=0.5 in the paper
+    export_fig(fig, 'simulation_bias_nlos_scenarios_tdoa')
+
 
 if __name__ == '__main__':
     config = load_env_config()
