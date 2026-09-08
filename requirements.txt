@@ -1,5 +1,8 @@
-seaborn
 numpy
-progressbar2
 pandas
+scipy
 matplotlib
+seaborn
+pillow
+progressbar2
+python-dotenv

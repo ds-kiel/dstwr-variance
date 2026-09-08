@@ -1,63 +1,65 @@
-# ALADIn: Autonomous Linear Antenna Delay Inference on Resource-Constrained Ultra-Wideband Devices
+# Precise Ranging: Bias and Variance of DS-TWR and TDoA Extraction
 
-This project contains the PoC for ALADIN: All-to-all Linear Antenna Delay Inference on Ultra-Wideband Devices. It is currently under revision and clean-up.
+Simulation code, firmware, testbed data, and plotting scripts for the paper
 
-TODO: Get the source code from the zephyr-uwb repository!!
+> **Precise Ranging: Modeling Bias and Variance of Double-Sided Two-Way Ranging with TDoA Extraction under Multipath and NLOS Effects**
+> Patrick Rathje, Christian Richter, Olaf Landsiedel
 
+The paper derives the bias and variance of Double-Sided Two-Way Ranging (DS-TWR) and of the Time Difference of Arrival (TDoA) that passive devices extract from overheard DS-TWR exchanges, including multipath and non-line-of-sight (NLOS) effects. This repository contains everything needed to reproduce its figures.
 
-## Setup
-Setup Zephyr and West as usual. As the Decawave Driver does not allow precise timings, we added some overrides which need to be manually applied (see override directory). As an alternative, you can checkout the related [Zephyr feature branch](https://github.com/prathje/zephyr/tree/feature/dwm_1001_ranging_api).
-Tested based on commit 6d56b829423056819c4baaafd6c66957752e22f8, while commit eeb4434d2eb5f2c978c59a439688c1f3f46e8bf8 has been reverted due to scheduling exceptions (already included in the overrides).
+## Repository layout
 
-## Build
+| Path | Content |
+| --- | --- |
+| `scripts/models.py` | Analytic bias and variance model for DS-TWR and TDoA extraction |
+| `scripts/sim_tdoa.py` | Monte Carlo simulation of DS-TWR exchanges with a passive listener |
+| `scripts/export_*.py` | One script per paper figure, writing PDFs to `export/` |
+| `scripts/cache_*.py` | Pre-processing of raw testbed logs into cached data frames |
+| `scripts/logs.py`, `scripts/testbed/` | Log parsing and testbed node positions |
+| `data/trento_a/` | Raw logs of the testbed runs on the CLOVES testbed (7 DWM1001 nodes) |
+| `cache/` | Cached intermediate results so that figures can be rebuilt without re-parsing the logs |
+| `export/` | The exported figures used in the paper |
+| `src/`, `prj.conf`, `CMakeLists.txt` | Zephyr firmware for the DWM1001 nodes |
+| `override/` | Patched Zephyr DW1000 driver required by the firmware |
 
-Build the project for the Decawave DWM1001 module:
+## Reproducing the figures
+
+Python 3.10 or newer is required. Create an environment and install the dependencies:
 
 ```bash
-west build -b decawave_dwm1001_dev --pristine auto
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
 ```
 
-You can then flash the boards one by one:
+Output and cache directories are configured in `.env` (`EXPORT_DIR=export`, `CACHE_DIR=cache`). All scripts are run from the repository root:
+
 ```bash
+./export_all.sh                     # all figures
+python3 scripts/export_nlos_sweep.py   # or a single figure
+```
+
+The scripts use the cached intermediate results in `cache/`. Delete the corresponding cache file to recompute a figure from the raw logs or to rerun a simulation. Cropped variants (`*_cropped.pdf`) are produced with `pdfcrop` from TeX Live when it is available on the `PATH`.
+
+## Firmware
+
+The firmware in `src/` runs DS-TWR rounds between all nodes and logs raw timestamps over serial. It targets Zephyr v2.7.2 and the `decawave_dwm1001_dev` board. The stock Zephyr DW1000 driver does not provide the required timestamping precision, so the files in `override/` have to be copied over the Zephyr tree first (or use the [patched Zephyr branch](https://github.com/prathje/zephyr/tree/feature/dwm_1001_ranging_api)).
+
+```bash
+cp -Rf override/* $ZEPHYR_BASE/
+west build -b decawave_dwm1001_dev --pristine auto
 west flash
 ```
 
-## Build With Docker
+The included `Dockerfile` and `docker-compose.yaml` provide a matching Zephyr build environment:
 
-You can also use the included Dockerfile / docker compose file configuration to build (warning this might take a bit of time):
-
-```commandline
+```bash
 docker compose up -d --build
-
 docker compose exec -it build /bin/bash
 cp -Rf /app/override/* /zephyr/zephyr/
 west build -b decawave_dwm1001_dev --pristine auto
 ```
 
-sudo pip3 install cmake
+## Citation
 
-
-To run and deploy on Lille:
-```commandline
-scp ./build/zephyr/zephyr.elf USER@lille.iot-lab.info:~ && ssh USER@lille.iot-lab.info 'iotlab-experiment submit -d 5 -l lille,dwm1001,1-14,zephyr.elf'
-```
-
-
-In the container you can also easily install script dependencies as follows:
-```commandline
-pip3 install numpy pandas matplotlib
-```
-## Scripts
-
-### Serial Monitor
-
-Use the monitor Python script to display JSON outputs of also multiple devices.
-```
-pip3 install pyserial
-python3 monitor.py </dev/tty.dev1> </dev/tty.dev2>
-```
-
-The result should look something like this:
-![Example](img/example.png)
-
-
+If you use this code or data, please cite the paper above.

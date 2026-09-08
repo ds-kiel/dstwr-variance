@@ -45,6 +45,7 @@ def load_plot_defaults():
     plt.rcParams['axes.axisbelow'] = True
 
 
+import shutil
 import subprocess
 import os
 
@@ -58,10 +59,12 @@ def save_and_crop(path, *args, **kwargs):
     crop = kwargs.pop('crop', DEFAULT_CROP)
     plt.savefig(path, *args, **kwargs)
 
-    if crop:
-        if file_extension == ".pdf":
-            cropped_path = filename + "_cropped" + file_extension
+    if crop and file_extension == ".pdf":
+        cropped_path = filename + "_cropped" + file_extension
+        if shutil.which("pdfcrop"):
             subprocess.run(["pdfcrop", path, cropped_path], stdout=subprocess.DEVNULL)
+        else:
+            print("pdfcrop not found, skipping {}".format(cropped_path))
 
 def add_df_cols(df, tdoa_src_dev_number=None):
 
