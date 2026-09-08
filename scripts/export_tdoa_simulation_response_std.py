@@ -679,8 +679,8 @@ def export_bias_comparison(export_dir):
             'b-p': los_noise,
         },
         'C': {
-            'a-b': nlos_noise,
-            'b-a': nlos_noise,
+            'a-b': los_noise,
+            'b-a': los_noise,
             'a-p': los_noise,
             'b-p': nlos_noise,
         },
